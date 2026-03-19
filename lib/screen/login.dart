@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:fotoloca/screen/admin/homepage_admin.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
+import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
+import 'package:fotoloca/screen/owner/homepage_owner.dart';
+import 'package:fotoloca/services/auth_service.dart';
+import 'package:fotoloca/test_widget.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 import 'package:fotoloca/widget/custom_textfield.dart';
 
@@ -11,7 +16,80 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  final bool _isPasswordVisible = false;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
+
+  //Login Function
+  Future<void> _prosesLogin() async {
+    //validasi
+    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username dan Password harus diisi!')),
+      );
+      return;
+    }
+    //loading mulai
+    setState(() {
+      _isLoading = true;
+    });
+
+    //Panggil service untuk tembak laravel
+    final result = await AuthService().login(
+      _usernameController.text,
+      _passwordController.text,
+    );
+
+    //matikan loading
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (!mounted) return;
+    if (result['success']) {
+      //Berhasil
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      String userRole = result['role'];
+
+      if (userRole == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomepageAdmin()),
+        );
+      } else if (userRole == 'kasir') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomepageKasir()),
+        );
+      } else if (userRole == 'owner') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomepageOwner()),
+        );
+      } else {
+        print("Role  tidak dikenali: $userRole");
+      }
+    } else {
+      //Gagal
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +210,7 @@ class _LoginState extends State<Login> {
                                   CustomTextfield(
                                     hintText: 'Username',
                                     icon: Icons.person,
+                                    controller: _usernameController,
                                   ),
                                   const SizedBox(height: 10),
 
@@ -140,6 +219,7 @@ class _LoginState extends State<Login> {
                                     hintText: 'Password',
                                     icon: Icons.lock,
                                     isObscure: true,
+                                    controller: _passwordController,
                                   ),
                                   const SizedBox(height: 100),
 
@@ -148,9 +228,9 @@ class _LoginState extends State<Login> {
                                     width: double.infinity,
                                     height: 50,
                                     child: ElevatedButton(
-                                      onPressed: () {
-                                        // Aksi login
-                                      },
+                                      onPressed: _isLoading
+                                          ? null
+                                          : _prosesLogin,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(
                                           0xFF636363,
@@ -164,13 +244,22 @@ class _LoginState extends State<Login> {
                                           ),
                                         ),
                                       ),
-                                      child: const Text(
-                                        'Login',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Text(
+                                              'Login',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ],

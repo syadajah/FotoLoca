@@ -38,4 +38,17 @@ class AuthService {
       return {'success': false, 'message': errorMessage};
     }
   }
+
+  Future<void> logout() async{
+    try{
+      await _apiClient.dio.post('/logout');
+      print("Token berhasil dimatikan di server laravel.");
+    } on DioException catch (e) {
+      print("Gagal mematikan token di server: ${e.message}");
+    }finally{
+      await _storage.delete(key: 'auth_token');
+      await _storage.delete(key: 'user_role');
+      print("Data lokal berhasil dihapus.");
+    }
+  }
 }

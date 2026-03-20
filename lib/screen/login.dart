@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fotoloca/screen/admin/homepage_admin.dart';
+import 'package:fotoloca/screen/admin/product_screen_admin.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
 import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
 import 'package:fotoloca/screen/owner/homepage_owner.dart';
@@ -61,7 +62,7 @@ class _LoginState extends State<Login> {
       if (userRole == 'admin') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomepageAdmin()),
+          MaterialPageRoute(builder: (context) => ProductScreenAdmin()),
         );
       } else if (userRole == 'kasir') {
         Navigator.pushReplacement(

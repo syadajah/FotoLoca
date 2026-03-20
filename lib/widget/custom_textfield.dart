@@ -11,6 +11,7 @@ class CustomTextfield extends StatefulWidget {
   final bool readOnly;
   final VoidCallback? onTap;
   final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onChanged;
 
   const CustomTextfield({
     super.key,
@@ -22,7 +23,8 @@ class CustomTextfield extends StatefulWidget {
     this.suffixIcon,
     this.readOnly = false,
     this.onTap,
-    this.inputFormatters
+    this.inputFormatters,
+    this.onChanged,
   });
 
   @override
@@ -41,6 +43,7 @@ class _CustomTextfieldState extends State<CustomTextfield> {
       readOnly: widget.readOnly,
       onTap: widget.onTap,
       inputFormatters: widget.inputFormatters,
+      onChanged: widget.onChanged,
       decoration: InputDecoration(
         filled: true,
         fillColor: const Color(0xFFF4F4F4),

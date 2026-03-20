@@ -1,7 +1,6 @@
-import 'dart:nativewrappers/_internal/vm/lib/ffi_native_type_patch.dart';
-
 import 'package:flutter/material.dart';
 import 'package:fotoloca/screen/admin/homepage_admin.dart';
+import 'package:fotoloca/screen/admin/product_screen_admin.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
 import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
 import 'package:fotoloca/screen/login.dart';
@@ -24,7 +23,7 @@ void main() async {
 
   if (token != null && role != null) {
     if (role == 'admin') {
-      firstPage = const HomepageAdmin();
+      firstPage = const ProductScreenAdmin();
     } else if (role == 'kasir') {
       firstPage = const HomepageKasir();
     } else if (role == 'owner') {
@@ -39,7 +38,6 @@ void main() async {
 
   runApp(MyApp(initialScreen: firstPage));
 }
-
 class MyApp extends StatefulWidget {
   final Widget initialScreen;
 

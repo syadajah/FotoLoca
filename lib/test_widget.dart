@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fotoloca/widget/currency_format.dart';
+import 'package:fotoloca/widget/custom_button.dart';
 // Pastikan path import ini sesuai dengan lokasi file CustomTextField milikmu
 import 'package:fotoloca/widget/custom_textfield.dart';
+import 'package:fotoloca/utils/app_colors.dart';
+import 'package:iconify_flutter/icons/heroicons.dart';
 
 class TestScreen extends StatefulWidget {
   const TestScreen({super.key});
@@ -140,6 +143,25 @@ class _TestScreenState extends State<TestScreen> {
               ],
             ),
 
+            const SizedBox(height: 24),
+            const Text(
+              '9. Button',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            // CustomButton(
+            //   text: "Tambah produk baru",
+            //   hasStroke: true,
+            //   icon: const Iconify(Mdi.plus, color: AppColors.button, size: 20),
+            //   textColor: Colors.grey,
+            //   backgroundColor: AppColors.background,
+            //   onPressed: () => Navigator.push(
+            //     context,
+            //     MaterialPageRoute(
+            //       builder: (BuildContext context) => const TestScreen(),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

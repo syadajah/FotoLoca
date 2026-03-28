@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:fotoloca/core/network/api_client.dart';
 
 class ProductServices {
@@ -11,31 +9,28 @@ class ProductServices {
     required String namaProduk,
     required String hargaProduk,
     required String deskripsi,
-    File? foto,
+    required String tierLevel,
+    String? fotoUrl,
   }) async {
     try {
-      //Bungkus teks ke dalam formData
-      FormData formData = FormData.fromMap({
+      Map<String, dynamic> dataPayload = {
         'id_kategori': idKategori,
         'nama_produk': namaProduk,
         'harga_produk': hargaProduk,
         'deskripsi': deskripsi,
-      });
+        'tier_level': tierLevel,
+      };
 
-      //Jika ada foto sisipkan ke dalam formdata
-      if (foto != null) {
-        String fileName = foto.path.split('/').last;
-        formData.files.add(
-          MapEntry(
-            'foto',
-            await MultipartFile.fromFile(foto.path, filename: fileName),
-          ),
-        );
+      if (fotoUrl != null) {
+        dataPayload['foto'] = fotoUrl;
       }
-      //Tembak ke laravel
-      final response = await _apiClient.dio.post('/products', data: formData);
 
-      if (response.statusCode == 201) {
+      final response = await _apiClient.dio.post(
+        '/products',
+        data: dataPayload,
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
         return {'success': true, 'message': 'Produk berhasil ditambahkan.'};
       }
       return {'success': false, 'message': 'Gagal menyimpan produk.'};
@@ -48,12 +43,11 @@ class ProductServices {
     }
   }
 
-  //Fungsi mengambil daftar produk
   Future<List<dynamic>> showProducts() async {
     try {
       final response = await _apiClient.dio.get('/products');
       if (response.statusCode == 200) {
-        return response.data['data'];
+        return response.data['data'] ?? response.data;
       }
       return [];
     } catch (e) {
@@ -68,31 +62,25 @@ class ProductServices {
     required String namaProduk,
     required String hargaProduk,
     required String deskripsi,
-    File? foto,
+    required String tierLevel,
+    String? fotoUrl,
   }) async {
     try {
-      FormData formData = FormData.fromMap({
-        '_method': 'PUT',
+      Map<String, dynamic> dataPayload = {
         'id_kategori': idKategori,
         'nama_produk': namaProduk,
         'harga_produk': hargaProduk,
         'deskripsi': deskripsi,
-      });
+        'tier_level': tierLevel,
+      };
 
-      //Jika user memilih foto baru, tambahkan ke form data
-      if (foto != null) {
-        String fileName = foto.path.split('/').last;
-        formData.files.add(
-          MapEntry(
-            'foto',
-            await MultipartFile.fromFile(foto.path, filename: fileName),
-          ),
-        );
+      if (fotoUrl != null) {
+        dataPayload['foto'] = fotoUrl;
       }
 
-      final response = await _apiClient.dio.post(
+      final response = await _apiClient.dio.put(
         '/products/$id',
-        data: formData,
+        data: dataPayload,
       );
 
       if (response.statusCode == 200) {
@@ -115,13 +103,60 @@ class ProductServices {
       if (response.statusCode == 200) {
         return {'success': true, 'message': 'Produk berhasil dihapus.'};
       }
-      return {'suuccess': false, 'message': 'Gagal menghapus produk.'};
+      return {'success': false, 'message': 'Gagal menghapus produk.'};
     } on DioException catch (e) {
       String errorMessage = 'Koneksi ke server bermasalah';
       if (e.response != null && e.response?.data != null) {
         errorMessage = e.response?.data['message'] ?? errorMessage;
       }
       return {'success': false, 'message': errorMessage};
+    }
+  }
+
+  Future<List<dynamic>> getCategories() async {
+    try {
+      final response = await _apiClient.dio.get('/categories');
+      return response.data['data'] ?? response.data;
+    } catch (e) {
+      print("Error fetch categories: $e");
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getAddOns() async {
+    try {
+      final response = await _apiClient.dio.get('/addons');
+      return response.data['data'] ?? response.data;
+    } catch (e) {
+      print("Error fetch addons: $e");
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> addAddOn(String nama, String harga) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/addons',
+        data: {'nama_addon': nama, 'harga_addon': harga},
+      );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {'success': true, 'message': 'Add-on berhasil ditambahkan'};
+      }
+      return {'success': false, 'message': 'Gagal menambah Add-on'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteAddOn(int id) async {
+    try {
+      final response = await _apiClient.dio.delete('/addons/$id');
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Add-on berhasil dihapus'};
+      }
+      return {'success': false, 'message': 'Gagal menghapus Add-on'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

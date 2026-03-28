@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fotoloca/screen/admin/homepage_admin.dart';
-import 'package:fotoloca/screen/admin/product_screen_admin.dart';
+import 'package:fotoloca/screen/introduction/main_navigation.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
-import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
-import 'package:fotoloca/screen/owner/homepage_owner.dart';
 import 'package:fotoloca/services/auth_service.dart';
-import 'package:fotoloca/test_widget.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 import 'package:fotoloca/widget/custom_textfield.dart';
 
@@ -59,29 +55,24 @@ class _LoginState extends State<Login> {
 
       String userRole = result['role'];
 
-      if (userRole == 'admin') {
+      List<String> validRoles = ['admin', 'kasir', 'owner'];
+
+      if (validRoles.contains(userRole)) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProductScreenAdmin()),
-        );
-      } else if (userRole == 'kasir') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomepageKasir()),
-        );
-      } else if (userRole == 'owner') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomepageOwner()),
+          MaterialPageRoute(
+            builder: (context) => MainNavigation(role: userRole),
+          ),
         );
       } else {
-        print("Role  tidak dikenali: $userRole");
+        print("Role tidak dikenali: $userRole");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-    } else {
-      //Gagal
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
-      );
     }
   }
 

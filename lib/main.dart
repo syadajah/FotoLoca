@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:fotoloca/screen/admin/homepage_admin.dart';
-import 'package:fotoloca/screen/admin/product_screen_admin.dart';
+import 'package:fotoloca/screen/introduction/main_navigation.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
-import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
 import 'package:fotoloca/screen/login.dart';
-import 'package:fotoloca/screen/owner/homepage_owner.dart';
-import 'package:fotoloca/test_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -19,17 +16,21 @@ void main() async {
   String? token = await storage.read(key: 'auth_token');
   String? role = await storage.read(key: 'user_role');
 
+  await Supabase.initialize(
+    url: "https://mrrovxvnbaapmlckdrof.supabase.co",
+    anonKey:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ycm92eHZuYmFhcG1sY2tkcm9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMTEzMDQsImV4cCI6MjA4ODU4NzMwNH0.tnfL2nX_FkRNU12D_Y9kJ3nTZmvo7oscug0UNJOwgW4",
+  );
+
   Widget firstPage;
 
   if (token != null && role != null) {
-    if (role == 'admin') {
-      firstPage = const ProductScreenAdmin();
-    } else if (role == 'kasir') {
-      firstPage = const HomepageKasir();
-    } else if (role == 'owner') {
-      firstPage = const HomepageOwner();
+    List<String> validRoles = ['admin', 'kasir', 'owner'];
+
+    if (validRoles.contains(role)) {
+      firstPage = MainNavigation(role: role);
     } else {
-      firstPage = Login();
+      firstPage = const Login();
     }
   } else {
     //Jika token kosong arahkan ke onboarding
@@ -38,6 +39,7 @@ void main() async {
 
   runApp(MyApp(initialScreen: firstPage));
 }
+
 class MyApp extends StatefulWidget {
   final Widget initialScreen;
 

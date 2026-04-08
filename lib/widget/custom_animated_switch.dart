@@ -17,7 +17,7 @@ class CustomAnimatedSwitch extends StatelessWidget {
     return GestureDetector(
       // Kalau lagi loading, switch-nya gak bisa diklik
       onTap: isLoading ? null : () => onChanged(!value),
-      
+
       // --- BACKGROUND SAKLAR (Berubah warna halus) ---
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300), // Kecepatan animasi
@@ -29,7 +29,7 @@ class CustomAnimatedSwitch extends StatelessWidget {
           // Kalau nyala hijau, mati abu-abu (atau merah terserah lu)
           color: value ? const Color(0xFF2E7D32) : Colors.grey.shade300,
         ),
-        
+
         // --- LINGKARAN PUTIH YANG GESER KANAN KIRI ---
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 300),

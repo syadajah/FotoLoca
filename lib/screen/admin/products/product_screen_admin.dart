@@ -173,7 +173,6 @@ class _ProductScreenAdminState extends State<ProductScreenAdmin> {
                       },
                     );
                   } else if (snapshot.hasError) {
-                  } else if (snapshot.hasError) {
                     //bila terjadi error di server
                     return Center(
                       child: Text(

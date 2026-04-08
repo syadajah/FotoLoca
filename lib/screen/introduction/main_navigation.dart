@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fotoloca/screen/admin/homepage_admin.dart';
+import 'package:fotoloca/screen/kasir/history_transaction.dart';
+import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
 import 'package:fotoloca/screen/admin/products/product_screen_admin.dart';
 import 'package:fotoloca/screen/admin/users/users_screen_admin.dart';
+import 'package:fotoloca/screen/profile_screen.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
@@ -32,9 +35,9 @@ class _MainNavigationState extends State<MainNavigation> {
         _pages = [
           const Center(child: HomepageAdmin()),
           const Center(child: ProductScreenAdmin()),
-          const Center(child: Text("Transaksi")),
+          const Center(child: HistoryTransaction()),
           const Center(child: UsersScreenAdmin()),
-          const Center(child: Text("Profil admin")),
+          const Center(child: ProfileScreen()),
         ];
         _navItems = const [
           GButton(icon: Icons.home, text: 'Beranda'),
@@ -47,13 +50,13 @@ class _MainNavigationState extends State<MainNavigation> {
 
       case 'kasir':
         _pages = [
-          const Center(child: Text("Dashboard admin")),
-          const Center(child: Text("Tambah produk")),
-          const Center(child: Text("Profil admin")),
+          const Center(child: HomepageKasir()),
+          const Center(child: HistoryTransaction()),
+          const Center(child: ProfileScreen()),
         ];
         _navItems = const [
-          GButton(icon: Icons.dashboard, text: 'Dashboard'),
-          GButton(icon: Icons.add, text: 'Tambah'),
+          GButton(icon: Icons.home, text: 'Beranda'),
+          GButton(icon: Icons.history, text: 'Transaksi'),
           GButton(icon: Icons.person, text: 'Profil'),
         ];
         break;

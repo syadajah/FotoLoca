@@ -1,11 +1,12 @@
 import 'dart:io'; // Untuk File
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:fotoloca/widget/currency_format.dart';
 import 'package:image_picker/image_picker.dart'; // Library ambil foto
 import 'package:supabase_flutter/supabase_flutter.dart'; // Library Supabase
 import 'package:uuid/uuid.dart'; // Library bikin nama file unik
 import 'package:fotoloca/services/product_services.dart';
 import 'package:fotoloca/utils/app_colors.dart';
-import 'package:fotoloca/widget/custom_button.dart';
 import 'package:fotoloca/widget/custom_textfield.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/mdi.dart';
@@ -171,11 +172,9 @@ class _EditProductAdminState extends State<EditProductAdmin> {
     });
   }
 
-  // --- 2. LOGIKA UTAMA (UDAH GAK PAKE CONTEXT LUAR LAGI) ---
+  // --- 2. LOGIKA UTAMA ---
   Future<void> _prosesUpdateProduk() async {
-    setState(
-      () => _isSubmitting = true,
-    ); // Nyalakan efek loading "Menyimpan..." di tombol luar
+    setState(() => _isSubmitting = true);
 
     String? newFotoUrl;
 
@@ -205,11 +204,16 @@ class _EditProductAdminState extends State<EditProductAdmin> {
             .getPublicUrl(fullPath);
       }
 
+      final String rawHarga = _priceController.text.replaceAll(
+        RegExp(r'[^0-9]'),
+        '',
+      );
+
       final result = await ProductServices().updateProducts(
         id: widget.productData['id'],
         idKategori: _selectedCategoryId.toString(),
         namaProduk: _nameController.text,
-        hargaProduk: _priceController.text,
+        hargaProduk: rawHarga,
         deskripsi: _descriptionController.text,
         tierLevel: _selectedTier!,
         fotoUrl: newFotoUrl,
@@ -236,10 +240,8 @@ class _EditProductAdminState extends State<EditProductAdmin> {
         );
       }
     } catch (e) {
-      setState(() => _isSubmitting = false); // Matikan loading kalau error
-      print(
-        "Error update: $e",
-      ); // Bakal nongol di terminal kalau bucket masih salah
+      setState(() => _isSubmitting = false);
+      print("Error update: $e");
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -255,10 +257,60 @@ class _EditProductAdminState extends State<EditProductAdmin> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("Edit Produk", style: TextStyle(color: Colors.black)),
+        title: const Text(
+          "Edit Produk",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        titleSpacing: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        // --- TOMBOL SIMPAN PINDAH KE SINI ---
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(
+              right: 24.0,
+              top: 10.0,
+              bottom: 10.0,
+            ),
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _showSaveConfirmationDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7A7A7A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      "Simpan",
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -266,7 +318,7 @@ class _EditProductAdminState extends State<EditProductAdmin> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- KOTAK GAMBAR (SAMA KAYAK CREATE, BISA DIKLIK) ---
+              // --- KOTAK GAMBAR (BISA DIKLIK) ---
               Center(
                 child: GestureDetector(
                   onTap: _pickImage, // Klik buat ganti foto
@@ -418,9 +470,13 @@ class _EditProductAdminState extends State<EditProductAdmin> {
               ),
               const SizedBox(height: 10),
               CustomTextfield(
+                hintText: 'Rp. ---.---',
                 controller: _priceController,
-                hintText: "Contoh: 50000",
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyFormat(),
+                ],
               ),
               const SizedBox(height: 20),
 
@@ -435,16 +491,6 @@ class _EditProductAdminState extends State<EditProductAdmin> {
                 maxLines: 5,
               ),
               const SizedBox(height: 30),
-
-              // --- TOMBOL SIMPAN (PANGGIL POP-UP DULU) ---
-              CustomButton(
-                text: _isSubmitting ? "Menyimpan..." : "Simpan Perubahan",
-                backgroundColor: AppColors.button,
-                textColor: Colors.white,
-                // Panggil Dialog Konfirmasi Ngabss!
-                onPressed: _isSubmitting ? () {} : _showSaveConfirmationDialog,
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),

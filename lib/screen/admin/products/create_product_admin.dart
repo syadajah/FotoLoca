@@ -25,7 +25,7 @@ class _CreateProductAdminState extends State<CreateProductAdmin> {
 
   // Controllers untuk input teks
   final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _hargaController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
   final TextEditingController _deskripsiController = TextEditingController();
   final List<String> _tierList = ['Essential', 'Signature', 'Exclusive'];
 
@@ -45,7 +45,7 @@ class _CreateProductAdminState extends State<CreateProductAdmin> {
   void dispose() {
     // Bersihkan memori saat halaman ditutup
     _namaController.dispose();
-    _hargaController.dispose();
+    _priceController.dispose();
     _deskripsiController.dispose();
     super.dispose();
   }
@@ -88,7 +88,7 @@ class _CreateProductAdminState extends State<CreateProductAdmin> {
   Future<void> _simpanProduk() async {
     // 1. Validasi Input
     if (_namaController.text.isEmpty ||
-        _hargaController.text.isEmpty ||
+        _priceController.text.isEmpty ||
         _deskripsiController.text.isEmpty ||
         _selectedKategoriId == null ||
         _selectedTier == null ||
@@ -118,7 +118,7 @@ class _CreateProductAdminState extends State<CreateProductAdmin> {
           .getPublicUrl(imagePath);
 
       // 3. Bersihkan Format Harga (Hapus 'Rp' dan titik)
-      final String rawHarga = _hargaController.text.replaceAll(
+      final String rawHarga = _priceController.text.replaceAll(
         RegExp(r'[^0-9]'),
         '',
       );
@@ -325,7 +325,7 @@ class _CreateProductAdminState extends State<CreateProductAdmin> {
               const SizedBox(height: 5),
               CustomTextfield(
                 hintText: 'Rp. ---.---',
-                controller: _hargaController,
+                controller: _priceController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,

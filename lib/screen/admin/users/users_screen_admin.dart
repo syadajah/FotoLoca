@@ -131,7 +131,7 @@ class _UsersScreenAdminState extends State<UsersScreenAdmin> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return ListView.builder(
                         padding: EdgeInsets.zero,
-                        itemCount: 5,
+                        itemCount: 7,
                         itemBuilder: (context, index) =>
                             const UserCardSkeleton(),
                       );
@@ -150,18 +150,35 @@ class _UsersScreenAdminState extends State<UsersScreenAdmin> {
                       return const Center(
                         child: Text(
                           'Belum ada pengguna.',
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey),
                         ),
                       );
                     }
 
                     // 4. DATA READY & FITUR SEARCH
-                    final users = snapshot.data!;
-                    final filteredUsers = users.where((user) {
+                    final allUsers = snapshot.data!;
+                    final kasirUsers = allUsers.where((user) {
                       final role = (user['role'] ?? '')
                           .toString()
                           .toLowerCase();
-                      final isKasir = role == 'kasir';
+                      return role == 'kasir';
+                    }).toList();
+
+                    if (kasirUsers.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Belum ada pengguna. \nSilahkan tambahkan pengguna baru.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      );
+                    }
+
+                    final query = _searchQuery.toLowerCase();
+                    final filteredUsers = kasirUsers.where((user) {
+                      if (query.isEmpty)
+                        return true; // Kalau gak ngetik apa-apa, lolosin semua
 
                       final name = (user['name'] ?? '')
                           .toString()
@@ -169,17 +186,16 @@ class _UsersScreenAdminState extends State<UsersScreenAdmin> {
                       final username = (user['username'] ?? '')
                           .toString()
                           .toLowerCase();
-                      final query = _searchQuery.toLowerCase();
-                      final matchSearch =
-                          name.contains(query) || username.contains(query);
-
-                      return isKasir && matchSearch;
+                      return name.contains(query) || username.contains(query);
                     }).toList();
 
+                    // 7. CEK HASIL PENCARIAN
+                    // Kalau nyari nama tapi gak nemu
                     if (filteredUsers.isEmpty) {
                       return const Center(
                         child: Text(
                           "Pengguna tidak ditemukan",
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey),
                         ),
                       );

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fotoloca/screen/introduction/main_navigation.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
 import 'package:fotoloca/services/auth_service.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 import 'package:fotoloca/widget/custom_textfield.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -19,6 +21,8 @@ class _LoginState extends State<Login> {
   bool _isLoading = false;
 
   //Login Function
+  //Login Function
+  //Login Function
   Future<void> _prosesLogin() async {
     //validasi
     if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -27,6 +31,7 @@ class _LoginState extends State<Login> {
       );
       return;
     }
+
     //loading mulai
     setState(() {
       _isLoading = true;
@@ -44,18 +49,45 @@ class _LoginState extends State<Login> {
     });
 
     if (!mounted) return;
+
     if (result['success']) {
-      //Berhasil
+      const storage = FlutterSecureStorage();
+
+      print("DATA DARI LARAVEL: $result");
+
+      // 1. UBAH DI SINI! Ambil dari key 'data' karena Laravel lu ngirimnya pakai nama 'data'
+      final userData = result['data'] ?? result;
+
+      final token = result['token']?.toString() ?? '';
+
+      // Sekarang ID sama Email pasti ketangkep!
+      final userId = userData['id']?.toString() ?? '0';
+      final name = userData['name']?.toString() ?? 'User';
+      final username = userData['username']?.toString() ?? 'username';
+      final email = userData['email']?.toString() ?? '';
+
+      final role =
+          userData['role']?.toString() ?? result['role']?.toString() ?? '';
+
+      // ... (lanjutan simpen ke storage biarin sama)
+      await storage.write(key: 'token', value: token);
+      await storage.write(key: 'user_id', value: userId);
+      await storage.write(key: 'user_name', value: name);
+      await storage.write(key: 'user_username', value: username);
+      await storage.write(key: 'user_email', value: email);
+      await storage.write(key: 'user_role', value: role);
+      // ...
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message']),
+          content: Text(result['message'] ?? 'Berhasil Login'),
           backgroundColor: Colors.green,
         ),
       );
 
-      String userRole = result['role'];
-
+      // 5. NAVIGASI ROLE YANG UDAH AMAN
       List<String> validRoles = ['admin', 'kasir', 'owner'];
+      String userRole = role.toLowerCase();
 
       if (validRoles.contains(userRole)) {
         Navigator.pushReplacement(
@@ -68,11 +100,18 @@ class _LoginState extends State<Login> {
         print("Role tidak dikenali: $userRole");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message']),
+            content: Text('Role "$userRole" tidak punya akses!'),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Login Gagal'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

@@ -50,10 +50,12 @@ class UserServices {
     }
   }
 
+  // FUNGSI BUAT ADMIN (Udah gw tambahin 'email' ke dalem payload data-nya)
   Future<Map<String, dynamic>> updateUser({
     required int id,
     required String name,
     required String username,
+    required String email,
     required String role,
     String? password,
   }) async {
@@ -61,6 +63,7 @@ class UserServices {
       final Map<String, dynamic> data = {
         'name': name,
         'username': username,
+        'email': email, // <--- Tadi ini lupa lu masukin bang, udah gw tambahin
         'role': role,
       };
 
@@ -83,6 +86,18 @@ class UserServices {
     }
   }
 
+  Future<Map<String, dynamic>> deleteUser(int id) async {
+    try {
+      final response = await _apiClient.dio.delete('/users/$id');
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Pengguna berhasil dihapus'};
+      }
+      return {'success': false, 'message': 'Gagal menghapus user'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
   Future<Map<String, dynamic>> toggleUserStatus(int id) async {
     try {
       final response = await _apiClient.dio.patch('/users/$id/toggle-status');
@@ -101,6 +116,46 @@ class UserServices {
         errorMessage = e.response?.data['message'] ?? errorMessage;
       }
       return {'success': false, 'message': errorMessage};
+    }
+  }
+
+  // --- FUNGSI BARU BUAT KASIR NGEDIT PROFILNYA SENDIRI ---
+  Future<Map<String, dynamic>> updateProfile({
+    required int id,
+    required String name,
+    required String username,
+    required String email,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put(
+        '/users/$id',
+        data: {'name': name, 'username': username, 'email': email},
+      );
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': response.data['message'] ?? 'Berhasil update profil',
+        };
+      }
+      return {'success': false, 'message': 'Gagal memperbarui profil.'};
+    } on DioException catch (e) {
+      if (e.response != null && e.response?.data != null) {
+        if (e.response?.statusCode == 422) {
+          final errors = e.response?.data['errors'];
+          return {
+            'success': false,
+            'message': errors.values.first[0].toString(),
+          };
+        }
+        return {
+          'success': false,
+          'message': e.response?.data['message'] ?? 'Server Error',
+        };
+      }
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi.'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

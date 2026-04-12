@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:fotoloca/core/network/api_client.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class TransactionServices {
   final ApiClient _apiClient = ApiClient();
@@ -168,6 +171,81 @@ class TransactionServices {
       return {'success': false, 'message': 'Koneksi ke server bermasalah.'};
     } catch (e) {
       return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> downloadLaporan({
+    String? startDate,
+    String? endDate,
+    required String type, // 'excel' atau 'pdf'
+  }) async {
+    try {
+      Map<String, dynamic> queryParams = {'type': type}; // Kirim type ke API
+      if (startDate != null && startDate.isNotEmpty)
+        queryParams['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty)
+        queryParams['end_date'] = endDate;
+
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = await getExternalStorageDirectory();
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      // Nentuin ekstensi file otomatis
+      String extension = type == 'pdf' ? '.pdf' : '.xlsx';
+      String fileName =
+          "Laporan_${DateTime.now().millisecondsSinceEpoch}$extension";
+      String savePath = "${directory!.path}/$fileName";
+
+      await _apiClient.dio.download(
+        '/transaction/export', // Pastikan endpoint lu ini
+        savePath,
+        queryParameters: queryParams,
+      );
+
+      final result = await OpenFilex.open(savePath);
+
+      if (result.type == ResultType.done) {
+        return {'success': true, 'message': 'Laporan berhasil dibuka.'};
+      } else {
+        return {
+          'success': false,
+          'message':
+              'Laporan tersimpan di perangkat (Aplikasi pembaca tidak ditemukan).',
+        };
+      }
+    } catch (e) {
+      print("Gagal download: $e");
+      return {'success': false, 'message': 'Gagal mengunduh laporan.'};
+    }
+  }
+
+  // --- FUNGSI KIRIM INVOICE KE EMAIL ---
+  Future<Map<String, dynamic>> sendInvoiceToEmail(int transactionId) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/transaction/$transactionId/send-invoice',
+      );
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': response.data['message'] ?? 'Email berhasil dikirim',
+        };
+      }
+      return {'success': false, 'message': 'Gagal mengirim invoice'};
+    } on DioException catch (e) {
+      if (e.response != null && e.response?.data != null) {
+        return {
+          'success': false,
+          'message': e.response?.data['message'] ?? 'Gagal mengirim email',
+        };
+      }
+      return {'success': false, 'message': 'Koneksi ke server bermasalah.'};
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
     }
   }
 }

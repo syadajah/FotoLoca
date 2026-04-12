@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fotoloca/screen/introduction/main_navigation.dart';
 import 'package:fotoloca/screen/introduction/onboarding.dart';
-import 'package:fotoloca/screen/login.dart';
+import 'package:fotoloca/screen/global_page/login.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

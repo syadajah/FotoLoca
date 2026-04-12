@@ -8,9 +8,6 @@ class ApiClient {
     // 1. Konfigurasi Dasar Dio
     _dio = Dio(
       BaseOptions(
-        // Ganti dengan IP komputer/laptop Anda jika testing di device asli.
-        // Jika pakai emulator Android, gunakan 10.0.2.2.
-        // Jangan pakai localhost atau 127.0.0.1 di emulator.
         baseUrl: 'http://10.10.30.11:8000/api',
         connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(seconds: 30),

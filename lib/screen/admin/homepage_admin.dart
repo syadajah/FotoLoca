@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fotoloca/services/dashboard_services.dart';
 import 'package:fotoloca/widget/custom_adminhomepage_skeleton.dart';
-import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart'; // Import untuk parsing tanggal
 
 class HomepageAdmin extends StatefulWidget {
   const HomepageAdmin({super.key});
@@ -17,6 +17,12 @@ class _HomepageAdminState extends State<HomepageAdmin> {
   bool _isLoading = true;
   Map<String, dynamic> _dashboardData = {};
 
+  // -- Variabel untuk Kalender --
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  List<DateTime> _bookedDates =
+      []; // List untuk menyimpan tanggal dari database
+
   @override
   void initState() {
     super.initState();
@@ -24,17 +30,29 @@ class _HomepageAdminState extends State<HomepageAdmin> {
   }
 
   Future<void> _loadData() async {
-    // 1. Tarik nama admin
     const storage = FlutterSecureStorage();
     final name = await storage.read(key: 'user_name');
     if (name != null) setState(() => _adminName = name);
 
-    // 2. Tarik data statistik dari Database
     final result = await DashboardServices().getAdminDashboard();
 
     if (result['success'] == true) {
+      // Parsing data tanggal string ("YYYY-MM-DD") menjadi objek DateTime
+      List<DateTime> parsedDates = [];
+      if (result['data']['booked_dates'] != null) {
+        for (var dateString in result['data']['booked_dates']) {
+          try {
+            // Sesuaikan format dengan format yang dikirim Laravel (misal: yyyy-MM-dd)
+            parsedDates.add(DateFormat('yyyy-MM-dd').parse(dateString));
+          } catch (e) {
+            print("Gagal parsing tanggal: $dateString");
+          }
+        }
+      }
+
       setState(() {
         _dashboardData = result['data'];
+        _bookedDates = parsedDates; // Simpan ke variable state
         _isLoading = false;
       });
     } else {
@@ -50,7 +68,6 @@ class _HomepageAdminState extends State<HomepageAdmin> {
     }
   }
 
-  // --- Helper Format Rupiah ---
   String formatRupiah(int number) {
     String numStr = number.toString();
     String result = '';
@@ -112,9 +129,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                         width: double.infinity,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF8D8D8D,
-                          ), // Warna abu-abu terang
+                          color: const Color(0xFF8D8D8D),
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: Stack(
@@ -145,7 +160,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    "Aktif: ${_dashboardData['kasir']['aktif']}/${_dashboardData['kasir']['total']}",
+                                    "Aktif: ${_dashboardData['kasir']?['aktif'] ?? 0}/${_dashboardData['kasir']?['total'] ?? 0}",
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -154,7 +169,6 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                 ],
                               ),
                             ),
-                            // Placeholder Ilustrasi Gambar (Ganti pakai asset lu nanti)
                             Positioned(
                               right: 0,
                               bottom: 0,
@@ -166,8 +180,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                 ),
                                 child: Image.asset(
                                   'assets/images/amico.png',
-                                  fit: BoxFit
-                                      .fitHeight, // Sesuaikan tinggi agar mengisi vertikal
+                                  fit: BoxFit.fitHeight,
                                 ),
                               ),
                             ),
@@ -190,7 +203,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A4A4A), // Warna abu-abu gelap
+                          color: const Color(0xFF4A4A4A),
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: Column(
@@ -217,7 +230,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                             Row(
                               children: [
                                 Text(
-                                  "${_dashboardData['transaksi']['total_transaksi']} Transaksi",
+                                  "${_dashboardData['transaksi']?['total_transaksi'] ?? 0} Transaksi",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -235,7 +248,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                 ),
                                 Text(
                                   formatRupiah(
-                                    _dashboardData['transaksi']['total_pendapatan'] ??
+                                    _dashboardData['transaksi']?['total_pendapatan'] ??
                                         0,
                                   ),
                                   style: const TextStyle(
@@ -248,9 +261,11 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              _dashboardData['transaksi']['persentase'] >= 0
-                                  ? "Penghasilan bertambah ${_dashboardData['transaksi']['persentase']}% dari bulan kemarin"
-                                  : "Penghasilan menurun ${(_dashboardData['transaksi']['persentase']).abs()}% dari bulan kemarin",
+                              (_dashboardData['transaksi']?['persentase'] ??
+                                          0) >=
+                                      0
+                                  ? "Penghasilan bertambah ${_dashboardData['transaksi']?['persentase'] ?? 0}% dari bulan kemarin"
+                                  : "Penghasilan menurun ${(_dashboardData['transaksi']?['persentase'] ?? 0).abs()}% dari bulan kemarin",
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 11,
@@ -261,7 +276,87 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                       ),
                       const SizedBox(height: 30),
 
-                      // --- SECTION 3: BUNDLE TERLARIS ---
+                      // --- SECTION 3: KALENDER JADWAL ---
+                      const Text(
+                        "Jadwal Booking",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Color(0xFF4A4A4A),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: TableCalendar(
+                          firstDay: DateTime.utc(2020, 1, 1),
+                          lastDay: DateTime.utc(2030, 12, 31),
+                          focusedDay: _focusedDay,
+                          selectedDayPredicate: (day) =>
+                              isSameDay(_selectedDay, day),
+                          onDaySelected: (selectedDay, focusedDay) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                            });
+                          },
+                          calendarBuilders: CalendarBuilders(
+                            defaultBuilder: (context, day, focusedDay) {
+                              // Cek apakah tanggal (day) ada di _bookedDates
+                              bool isBooked = _bookedDates.any(
+                                (bookedDate) =>
+                                    bookedDate.year == day.year &&
+                                    bookedDate.month == day.month &&
+                                    bookedDate.day == day.day,
+                              );
+
+                              if (isBooked) {
+                                return Container(
+                                  margin: const EdgeInsets.all(4.0),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    border: Border.all(color: Colors.redAccent),
+                                  ),
+                                  child: Text(
+                                    '${day.day}',
+                                    style: const TextStyle(
+                                      color: Colors.redAccent,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return null; // Gunakan tampilan default jika tidak dibooking
+                            },
+                          ),
+                          headerStyle: const HeaderStyle(
+                            formatButtonVisible: false,
+                            titleCentered: true,
+                          ),
+                          calendarStyle: CalendarStyle(
+                            todayDecoration: BoxDecoration(
+                              color: Colors.blue.shade200,
+                              shape: BoxShape.circle,
+                            ),
+                            selectedDecoration: const BoxDecoration(
+                              color: Color(0xFF4A4A4A),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // --- SECTION 4: BUNDLE TERLARIS ---
                       const Text(
                         "Bundle Produk Terlaris",
                         style: TextStyle(
@@ -271,8 +366,6 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                         ),
                       ),
                       const SizedBox(height: 10),
-
-                      // Kotak Pembungkus List
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(15),
@@ -323,7 +416,6 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                       ),
                                       child: Row(
                                         children: [
-                                          // Foto Produk
                                           ClipRRect(
                                             borderRadius: BorderRadius.circular(
                                               8,
@@ -343,8 +435,6 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                             ),
                                           ),
                                           const SizedBox(width: 15),
-
-                                          // Detail
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment:

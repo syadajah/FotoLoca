@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fotoloca/screen/login.dart';
+import 'package:fotoloca/screen/global_page/login.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {

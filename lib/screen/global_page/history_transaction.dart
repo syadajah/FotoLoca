@@ -34,7 +34,6 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
   }
 
   // --- FUNGSI TARIK DATA DARI API ---
-  // --- FUNGSI TARIK DATA DARI API ---
   Future<void> _fetchHistory() async {
     _fetchId++; // Tiap kali fungsi dipanggil, nomor antrean naik
     final int currentFetchId = _fetchId; // Simpan nomor antrean saat ini
@@ -54,11 +53,6 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
       endDate: endStr,
     );
 
-    // ==============================================================
-    // JURUS ANTI-BALAPAN:
-    // Kalau kasir udah ngetik kata baru (currentFetchId != _fetchId),
-    // abaikan aja data lama yang baru nyampe ini! Jangan di-setState!
-    // ==============================================================
     if (!mounted || currentFetchId != _fetchId) return;
 
     setState(() {
@@ -110,6 +104,140 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
     }
   }
 
+  // --- FUNGSI RESET TANGGAL ---
+  void _resetDates() {
+    setState(() {
+      _startDate = null;
+      _endDate = null;
+    });
+    _fetchHistory();
+  }
+
+  // --- FUNGSI EKSEKUSI EXPORT (DOWNLOAD) ---
+  Future<void> _executeDownload(String formatType) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
+    );
+
+    String? startStr = _startDate != null
+        ? "${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}"
+        : null;
+    String? endStr = _endDate != null
+        ? "${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}"
+        : null;
+
+    final result = await TransactionServices().downloadLaporan(
+      startDate: startStr,
+      endDate: endStr,
+      type: formatType,
+    );
+
+    if (mounted) Navigator.pop(context); // Tutup loading
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: result['success'] ? Colors.green : Colors.orange,
+        ),
+      );
+    }
+  }
+
+  // --- POPUP PILIH FORMAT CETAK ---
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Cetak Laporan Transaksi",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Pilih format file laporan yang ingin Anda unduh.",
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildExportOptionBtn(
+                    icon: Icons.table_view_rounded,
+                    color: Colors.green,
+                    title: "Excel",
+                    onTap: () {
+                      Navigator.pop(context);
+                      _executeDownload('excel');
+                    },
+                  ),
+                  _buildExportOptionBtn(
+                    icon: Icons.picture_as_pdf_rounded,
+                    color: Colors.redAccent,
+                    title: "PDF",
+                    onTap: () {
+                      Navigator.pop(context);
+                      _executeDownload('pdf');
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // WIDGET TOMBOL PILIHAN FORMAT
+  Widget _buildExportOptionBtn({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.5)),
+            ),
+            child: Icon(icon, color: color, size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   // --- HELPER FORMAT ---
   String formatRupiah(int number) {
     String numStr = number.toString();
@@ -157,20 +285,22 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
         automaticallyImplyLeading: false,
       ),
 
+      // TOMBOL CETAK UTAMA (MEMANGGIL POP-UP)
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.grey.shade400,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        onPressed: () {
-          print("Tombol Cetak Ditekan!");
-        },
-        child: const Icon(Icons.insert_drive_file, color: Colors.black54),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
+        onPressed: _showExportOptions,
+        child: const Icon(Icons.print_rounded, color: Colors.black87),
       ),
 
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
-            // --- FILTER TANGGAL ---
+            // --- FILTER TANGGAL DENGAN TOMBOL RESET ---
             Row(
               children: [
                 Expanded(
@@ -248,6 +378,27 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 10),
+
+                // TOMBOL RESET TANGGAL
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: IconButton(
+                    padding: const EdgeInsets.all(10),
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
+                    onPressed: _resetDates,
+                    tooltip: 'Reset Filter Tanggal',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 15),
@@ -302,7 +453,6 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
               child: _isLoading
                   ? const HistorySkeletonList(itemCount: 5)
                   : _transactions.isEmpty
-                  // Logika double udah gw babat di sini!
                   ? const Center(
                       child: Text(
                         "Tidak ada data transaksi",
@@ -326,12 +476,12 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
 
                         String namaKategori =
                             category['nama_kategori'] ?? 'Kategori';
-                        String namaKasir = user['name'] ?? 'Kasir';
+                        String namaKasir = user['name'] ?? 'Kasir (Terhapus)';
                         String nomorUnik = tx['nomor_unik'] ?? 'XXX-XXX';
                         String namaPelanggan =
                             tx['nama_pelanggan'] ?? 'Pelanggan';
                         String namaProduk =
-                            product['nama_produk'] ?? 'Nama Produk';
+                            product['nama_produk'] ?? 'Produk (Terhapus)';
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),

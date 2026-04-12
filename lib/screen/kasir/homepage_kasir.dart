@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fotoloca/screen/kasir/detail_product_cashier.dart';
-import 'package:fotoloca/screen/login.dart';
+import 'package:fotoloca/screen/global_page/login.dart';
 import 'package:fotoloca/services/auth_service.dart';
 import 'package:fotoloca/services/product_services.dart';
 import 'package:fotoloca/utils/app_colors.dart';
@@ -10,7 +10,8 @@ import 'package:fotoloca/widget/custom_textfield.dart';
 import 'package:fotoloca/widget/product_card.dart';
 import 'package:fotoloca/widget/related_product_skeleton.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:iconify_flutter/icons/mdi.dart'; // Sesuaikan sama import skeleton lu
+import 'package:iconify_flutter/icons/mdi.dart';
+import 'package:fotoloca/screen/global_page/activity_log.dart';
 
 class HomepageKasir extends StatefulWidget {
   const HomepageKasir({super.key});
@@ -115,7 +116,12 @@ class _HomepageKasirState extends State<HomepageKasir> {
                       // Tombol History Bundar Sesuai Desain
                       IconButton(
                         onPressed: () {
-                          // TODO: Arahkan ke halaman history
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ActivityLogScreen(),
+                            ),
+                          );
                         },
                         icon: const Iconify(
                           Mdi.history,
@@ -176,14 +182,11 @@ class _HomepageKasirState extends State<HomepageKasir> {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
                             return ListView.builder(
-                              shrinkWrap:
-                                  true, // WAJIB ADA BIAR BISA DI DALAM SCROLLVIEW
-                              physics:
-                                  const NeverScrollableScrollPhysics(), // WAJIB ADA
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
                               padding: EdgeInsets.zero,
                               itemCount: 4,
                               itemBuilder: (context, index) {
-                                // Ganti pakai Skeleton Class lu (misal ProductCardSkeleton / RelatedProductSkeleton)
                                 return const ProductCardSkeleton();
                               },
                             );

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fotoloca/screen/admin/homepage_admin.dart';
-import 'package:fotoloca/screen/kasir/history_transaction.dart';
+import 'package:fotoloca/screen/global_page/history_transaction.dart';
 import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
 import 'package:fotoloca/screen/admin/products/product_screen_admin.dart';
 import 'package:fotoloca/screen/admin/users/users_screen_admin.dart';
-import 'package:fotoloca/screen/profile_screen.dart';
+import 'package:fotoloca/screen/global_page/profile_screen.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 

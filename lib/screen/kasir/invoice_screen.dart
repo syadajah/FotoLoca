@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fotoloca/services/transaction_services.dart';
 
-class InvoiceScreenKasir extends StatelessWidget {
-  // Udah gak butuh Stateful karena datanya langsung ready
+class InvoiceScreenKasir extends StatefulWidget {
   final Map<String, dynamic> productData;
   final Map<String, dynamic> transactionData;
   final String categoryName;
@@ -12,6 +12,13 @@ class InvoiceScreenKasir extends StatelessWidget {
     required this.transactionData,
     required this.categoryName,
   });
+
+  @override
+  State<InvoiceScreenKasir> createState() => _InvoiceScreenKasirState();
+}
+
+class _InvoiceScreenKasirState extends State<InvoiceScreenKasir> {
+  bool _isSendingEmail = false;
 
   // Helper Format Rupiah
   String formatRupiah(int number) {
@@ -56,31 +63,62 @@ class InvoiceScreenKasir extends StatelessWidget {
     }
   }
 
+  // Fungsi Eksekusi API Kirim Email
+  Future<void> _sendEmail() async {
+    final emailPelanggan = widget.transactionData['email_pelanggan'];
+
+    // Cek di awal kalau email kosong
+    if (emailPelanggan == null || emailPelanggan.toString().trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada email pelanggan pada transaksi ini.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSendingEmail = true);
+
+    final txId = int.tryParse(widget.transactionData['id'].toString()) ?? 0;
+
+    final result = await TransactionServices().sendInvoiceToEmail(txId);
+
+    if (mounted) {
+      setState(() => _isSendingEmail = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: result['success'] ? Colors.green : Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 1. Ekstrak Data Dasar
-    final String imageUrl = productData['foto'] ?? '';
-    final String namaProduk = productData['nama_produk'] ?? 'Nama Produk';
+    // Ekstrak Data dari widget (harus pakai widget. karena sekarang Stateful)
+    final String imageUrl = widget.productData['foto'] ?? '';
+    final String namaProduk =
+        widget.productData['nama_produk'] ?? 'Nama Produk';
     final int hargaProduk =
-        int.tryParse(productData['harga_produk'].toString()) ?? 0;
+        int.tryParse(widget.productData['harga_produk'].toString()) ?? 0;
 
-    // 2. Ekstrak Data Transaksi (SEKARANG NAMA KASIR DIAMBIL DARI SINI)
-    // Asumsinya kolom nama di tabel users Laravel lu adalah 'name'
-    final String namaKasir = transactionData['user'] != null
-        ? transactionData['user']['name']
+    final String namaKasir = widget.transactionData['user'] != null
+        ? widget.transactionData['user']['name']
         : 'Kasir';
-    final String namaPelanggan = transactionData['nama_pelanggan'] ?? '-';
-    final String jadwal = transactionData['jadwal'] ?? '-';
+    final String namaPelanggan =
+        widget.transactionData['nama_pelanggan'] ?? '-';
+    final String emailPelanggan =
+        widget.transactionData['email_pelanggan'] ?? 'Tidak dicantumkan';
+    final String jadwal = widget.transactionData['jadwal'] ?? '-';
     final int uangBayar =
-        int.tryParse(transactionData['uang_bayar'].toString()) ?? 0;
+        int.tryParse(widget.transactionData['uang_bayar'].toString()) ?? 0;
     final int uangKembali =
-        int.tryParse(transactionData['uang_kembali'].toString()) ?? 0;
-    final String kodeUnik = transactionData['nomor_unik'] ?? 'XXX-XXX';
+        int.tryParse(widget.transactionData['uang_kembali'].toString()) ?? 0;
+    final String kodeUnik = widget.transactionData['nomor_unik'] ?? 'XXX-XXX';
+    final List<dynamic> addons = widget.transactionData['addons'] ?? [];
 
-    // 3. Ekstrak Data Add-Ons
-    final List<dynamic> addons = transactionData['addons'] ?? [];
-
-    // 4. Hitung Grand Total
     int grandTotal = hargaProduk;
     for (var addon in addons) {
       grandTotal += int.tryParse(addon['harga_addon'].toString()) ?? 0;
@@ -98,9 +136,8 @@ class InvoiceScreenKasir extends StatelessWidget {
             color: Colors.black,
             size: 20,
           ),
-          onPressed: () {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          },
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
         ),
         title: const Text(
           "Invoice",
@@ -114,30 +151,64 @@ class InvoiceScreenKasir extends StatelessWidget {
         titleSpacing: 0,
       ),
 
+      // TOMBOL BAWAH (Sekarang ada 2: Cetak & Kirim Email)
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24.0),
         color: const Color(0xFFF9F9F9),
-        child: OutlinedButton.icon(
-          onPressed: () {
-            print("Proses cetak struk via bluetooth thermal printer...");
-          },
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+        child: Row(
+          children: [
+            // Tombol Cetak (Kiri)
+            Expanded(
+              flex: 1,
+              child: OutlinedButton(
+                onPressed: () {
+                  print("Proses cetak struk via bluetooth thermal...");
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  backgroundColor: Colors.white,
+                ),
+                child: const Icon(Icons.print, color: Colors.black54),
+              ),
             ),
-            backgroundColor: Colors.white,
-          ),
-          icon: const Icon(Icons.print, color: Colors.black54),
-          label: const Text(
-            "Cetak Struk",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+            const SizedBox(width: 15),
+            // Tombol Kirim Email (Kanan)
+            Expanded(
+              flex: 3,
+              child: ElevatedButton.icon(
+                onPressed: _isSendingEmail ? null : _sendEmail,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF5A5A5A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                icon: _isSendingEmail
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.email_outlined, color: Colors.white),
+                label: Text(
+                  _isSendingEmail ? "Mengirim..." : "Kirim ke Email",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
 
@@ -164,8 +235,7 @@ class InvoiceScreenKasir extends StatelessWidget {
                             width: 100,
                             height: 70,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) =>
-                                _buildPlaceholderImage(),
+                            errorBuilder: (_, _, _) => _buildPlaceholderImage(),
                           )
                         : _buildPlaceholderImage(),
                   ),
@@ -176,7 +246,7 @@ class InvoiceScreenKasir extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          categoryName,
+                          widget.categoryName,
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.grey,
@@ -308,11 +378,9 @@ class InvoiceScreenKasir extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            _buildDataRow(
-              "Kasir",
-              namaKasir,
-            ), // SEKARANG NAMPILIN NAMA KASIR ASLI
-            _buildDataRow("Nama Pelanggan", namaPelanggan),
+            _buildDataRow("Kasir", namaKasir),
+            _buildDataRow("Pelanggan", namaPelanggan),
+            _buildDataRow("Email", emailPelanggan), // Tambah info email di UI
             _buildDataRow("Jadwal", formatDate(jadwal)),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 10),
@@ -362,7 +430,7 @@ class InvoiceScreenKasir extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // --- 7. TIPS BAWAH ---
+            // --- 7. TIPS BAWAH (DITAMBAHKAN KEMBALI) ---
             const Text(
               "Tips:",
               style: TextStyle(

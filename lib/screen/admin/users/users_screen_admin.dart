@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fotoloca/screen/global_page/activity_log.dart';
 import 'package:fotoloca/screen/admin/users/create_users_admin.dart';
 import 'package:fotoloca/screen/admin/users/detail_users_admin.dart';
 import 'package:fotoloca/services/user_services.dart';
@@ -67,7 +68,14 @@ class _UsersScreenAdminState extends State<UsersScreenAdmin> {
                   ),
                   const SizedBox(width: 5),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ActivityLogScreen(),
+                        ),
+                      );
+                    },
                     icon: const Icon(
                       Icons.history,
                       color: AppColors.button,
@@ -215,7 +223,15 @@ class _UsersScreenAdminState extends State<UsersScreenAdmin> {
                           role: user['role'] ?? 'Kasir',
                           isActive: isActive,
                           onHistoryTap: () {
-                            print("Nanti buka halaman history kasir ini");
+                           Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ActivityLogScreen(
+                                  userId: user['id'], // Kirim ID user spesifik
+                                  userName: user['name'], // Kirim nama buat judul
+                                ),
+                              ),
+                            );
                           },
                           onTap: () async {
                             await Navigator.push(

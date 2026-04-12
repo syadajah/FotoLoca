@@ -31,18 +31,28 @@ class UserServices {
       }
       return {'success': false, 'message': 'Gagal menambah pengguna'};
     } on DioException catch (e) {
-      String errorMessage = 'Koneksi ke server bermasalah';
+      // 👇 PENANGKAP ERROR 422 (USERNAME/EMAIL KEMBAR)
       if (e.response != null && e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
+        if (e.response?.statusCode == 422 &&
+            e.response?.data['errors'] != null) {
+          final errors = e.response?.data['errors'];
+          return {
+            'success': false,
+            'message': errors.values.first[0].toString(),
+          };
+        }
+        return {
+          'success': false,
+          'message': e.response?.data['message'] ?? 'Gagal menambah pengguna',
+        };
       }
-      return {'success': false, 'message': errorMessage};
+      return {'success': false, 'message': 'Koneksi ke server bermasalah'};
     }
   }
 
   Future<List<dynamic>> getUsers() async {
     try {
       final response = await _apiClient.dio.get('/users');
-
       return response.data['data'] ?? [];
     } catch (e) {
       print("Error get users: $e");
@@ -50,7 +60,6 @@ class UserServices {
     }
   }
 
-  // FUNGSI BUAT ADMIN (Udah gw tambahin 'email' ke dalem payload data-nya)
   Future<Map<String, dynamic>> updateUser({
     required int id,
     required String name,
@@ -63,7 +72,7 @@ class UserServices {
       final Map<String, dynamic> data = {
         'name': name,
         'username': username,
-        'email': email, // <--- Tadi ini lupa lu masukin bang, udah gw tambahin
+        'email': email,
         'role': role,
       };
 
@@ -78,11 +87,22 @@ class UserServices {
       }
       return {'success': false, 'message': 'Gagal mengupdate pengguna'};
     } on DioException catch (e) {
-      String errorMessage = 'Koneksi ke server bermasalah';
+      // 👇 PENANGKAP ERROR 422 (USERNAME/EMAIL KEMBAR)
       if (e.response != null && e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
+        if (e.response?.statusCode == 422 &&
+            e.response?.data['errors'] != null) {
+          final errors = e.response?.data['errors'];
+          return {
+            'success': false,
+            'message': errors.values.first[0].toString(),
+          };
+        }
+        return {
+          'success': false,
+          'message': e.response?.data['message'] ?? 'Gagal mengupdate pengguna',
+        };
       }
-      return {'success': false, 'message': errorMessage};
+      return {'success': false, 'message': 'Koneksi ke server bermasalah'};
     }
   }
 

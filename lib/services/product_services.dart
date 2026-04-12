@@ -35,11 +35,22 @@ class ProductServices {
       }
       return {'success': false, 'message': 'Gagal menyimpan produk.'};
     } on DioException catch (e) {
-      String errorMessage = 'Koneksi ke server bermasalah';
+      // 👇 PENANGKAP ERROR 422
       if (e.response != null && e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
+        if (e.response?.statusCode == 422 &&
+            e.response?.data['errors'] != null) {
+          final errors = e.response?.data['errors'];
+          return {
+            'success': false,
+            'message': errors.values.first[0].toString(),
+          };
+        }
+        return {
+          'success': false,
+          'message': e.response?.data['message'] ?? 'Gagal menambah produk',
+        };
       }
-      return {'success': false, 'message': errorMessage};
+      return {'success': false, 'message': 'Koneksi ke server bermasalah'};
     }
   }
 
@@ -88,31 +99,41 @@ class ProductServices {
       }
       return {'success': false, 'message': 'Gagal mengupdate produk.'};
     } on DioException catch (e) {
-      String errorMessage = 'Koneksi ke server bermasalah';
+      // 👇 PENANGKAP ERROR 422
       if (e.response != null && e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
+        if (e.response?.statusCode == 422 &&
+            e.response?.data['errors'] != null) {
+          final errors = e.response?.data['errors'];
+          return {
+            'success': false,
+            'message': errors.values.first[0].toString(),
+          };
+        }
+        return {
+          'success': false,
+          'message': e.response?.data['message'] ?? 'Gagal mengupdate produk',
+        };
       }
-      return {'success': false, 'message': errorMessage};
+      return {'success': false, 'message': 'Koneksi ke server bermasalah'};
     }
   }
 
   Future<Map<String, dynamic>> deleteProduct(int id) async {
     try {
       final response = await _apiClient.dio.delete('/products/$id');
-
       if (response.statusCode == 200) {
         return {'success': true, 'message': 'Produk berhasil dihapus.'};
       }
       return {'success': false, 'message': 'Gagal menghapus produk.'};
     } on DioException catch (e) {
-      String errorMessage = 'Koneksi ke server bermasalah';
-      if (e.response != null && e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      }
-      return {'success': false, 'message': errorMessage};
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? 'Koneksi bermasalah',
+      };
     }
   }
 
+  // ... (fungsi getCategories, getAddOns, addAddOn, deleteAddOn biarin sama kayak punya lu)
   Future<List<dynamic>> getCategories() async {
     try {
       final response = await _apiClient.dio.get('/categories');

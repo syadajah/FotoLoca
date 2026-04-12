@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:fotoloca/screen/login.dart'; // Sesuaikan path login lu
+import 'package:fotoloca/screen/global_page/login.dart'; // Sesuaikan path login lu
 import 'package:fotoloca/services/auth_service.dart';
 import 'package:fotoloca/services/user_services.dart'; // Pastiin ini ke-import ya!
 
@@ -304,13 +304,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // --- FORM EDIT ---
               Expanded(
                 child: SingleChildScrollView(
-                  child: Column(
+                  child: // --- DI DALAM SINGLECHILDSCROLLVIEW ---
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildInputLabel("Nama"),
                       _buildTextField(
                         _nameController,
                         "Masukkan nama pengguna",
+                        readOnly: _role.toLowerCase() == 'kasir',
                       ),
 
                       const SizedBox(height: 20),
@@ -319,51 +321,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildTextField(
                         _usernameController,
                         "Masukkan username pengguna",
+                        readOnly: _role.toLowerCase() == 'kasir',
                       ),
 
                       const SizedBox(height: 20),
 
-                      _buildInputLabel("Email (Opsional)"),
+                      _buildInputLabel("Email"),
                       _buildTextField(
                         _emailController,
                         "Masukkan email aktif",
                         keyboardType: TextInputType.emailAddress,
+                        readOnly:
+                            _role.toLowerCase() ==
+                            'kasir', // SEKARANG EMAIL JUGA READONLY
                       ),
 
                       const SizedBox(height: 30),
 
-                      // --- TOMBOL SIMPAN ---
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          // Panggil ALERT KONFIRMASI SIMPAN di sini
-                          onPressed: _isSaving ? null : _showSaveConfirmation,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF5A5A5A),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                      // LOGIKA TOMBOL: Hilangkan tombol simpan jika Kasir
+                      if (_role.toLowerCase() != 'kasir')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isSaving ? null : _showSaveConfirmation,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF5A5A5A),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Simpan Perubahan",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        )
+                      else
+                        // Tampilkan pesan pengganti tombol biar gak kosong banget
+                        const Center(
+                          child: Text(
+                            "* Data profil dikunci oleh Admin",
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  "Simpan Perubahan",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -414,20 +431,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // --- REVISI HELPER WIDGETS ---
   Widget _buildTextField(
     TextEditingController controller,
     String hint, {
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false, // Tambahkan parameter ini
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 14, color: Colors.black87),
+      readOnly: readOnly, // Pasang di sini
+      style: TextStyle(
+        fontSize: 14,
+        // Kalau readOnly, warnanya agak abu-abu biar keliatan "locked"
+        color: readOnly ? Colors.grey : Colors.black87,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
         filled: true,
-        fillColor: Colors.transparent,
+        fillColor: readOnly
+            ? Colors.grey.shade100
+            : Colors.transparent, // Background abu kalau dikunci
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
@@ -438,7 +464,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+          borderSide: BorderSide(
+            color: readOnly ? Colors.grey.shade300 : Colors.grey,
+            width: 1.5,
+          ),
         ),
       ),
     );

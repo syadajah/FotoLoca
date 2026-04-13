@@ -3,6 +3,8 @@ import 'package:fotoloca/utils/app_colors.dart';
 import 'package:fotoloca/widget/custom_textfield.dart';
 import 'package:fotoloca/services/product_services.dart';
 import 'package:fotoloca/screen/admin/products/edit_product_admin.dart';
+// --- TAMBAHAN 1: Import Secure Storage ---
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class DetailProductAdmin extends StatefulWidget {
   // 1. Menerima data produk operan dari halaman List
@@ -21,9 +23,15 @@ class _DetailProductAdminState extends State<DetailProductAdmin> {
   late TextEditingController _priceController;
   late TextEditingController _descriptionController;
 
+  // --- TAMBAHAN 2: Variabel untuk menyimpan role ---
+  String _userRole = '';
+  bool _isLoadingRole = true;
+
   @override
   void initState() {
     super.initState();
+    _loadUserRole(); // --- Panggil pengecekan role saat halaman dibuka ---
+
     // 3. Langsung isi semua controller dengan data bawaan dari database
     _nameController = TextEditingController(
       text: widget.productData['nama_produk'] ?? 'Tanpa Nama',
@@ -39,6 +47,21 @@ class _DetailProductAdminState extends State<DetailProductAdmin> {
     _descriptionController = TextEditingController(
       text: widget.productData['deskripsi'] ?? 'Tidak ada deskripsi',
     );
+  }
+
+  // --- TAMBAHAN 3: Fungsi Cek Role ---
+  Future<void> _loadUserRole() async {
+    const storage = FlutterSecureStorage();
+    final role = await storage.read(
+      key: 'user_role',
+    ); // Pastikan key-nya sesuai
+
+    if (mounted) {
+      setState(() {
+        _userRole = role ?? 'admin'; // Set default jika kosong
+        _isLoadingRole = false;
+      });
+    }
   }
 
   // --- FUNGSI MUNCULIN POP-UP KONFIRMASI HAPUS PRODUK ---
@@ -304,73 +327,77 @@ class _DetailProductAdminState extends State<DetailProductAdmin> {
                 ),
               ),
               const SizedBox(height: 30),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        // Arahkan ke Halaman Edit sambil bawa data produk
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditProductAdmin(
-                              productData: widget.productData,
+
+              // --- TAMBAHAN 4: Sembunyikan Tombol jika role = owner ---
+              if (!_isLoadingRole && _userRole != 'owner')
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          // Arahkan ke Halaman Edit sambil bawa data produk
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProductAdmin(
+                                productData: widget.productData,
+                              ),
                             ),
+                          );
+
+                          if (result == true) {
+                            if (!context.mounted) return;
+                            Navigator.pop(context, true);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          backgroundColor:
+                              AppColors.button, // Warna kapsul abu-abu lu
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                        );
-
-                        if (result == true) {
-                          if (!context.mounted) return;
-                          Navigator.pop(context, true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        backgroundColor:
-                            AppColors.button, // Warna kapsul abu-abu lu
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
                         ),
-                      ),
-                      child: const Text(
-                        "Edit",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        child: const Text(
+                          "Edit",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 15),
+                    const SizedBox(width: 15),
 
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        _showDeleteConfirmation();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: const BorderSide(
-                          color: Colors.redAccent,
-                          width: 2,
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          _showDeleteConfirmation();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          side: const BorderSide(
+                            color: Colors.redAccent,
+                            width: 2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      child: const Text(
-                        "Hapus",
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        child: const Text(
+                          "Hapus",
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+
               const SizedBox(
                 height: 10,
               ), // Jarak aman paling bawah sebelum mentok layar

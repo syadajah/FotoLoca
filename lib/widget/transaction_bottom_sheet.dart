@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:fotoloca/services/transaction_services.dart';
 import 'package:fotoloca/screen/kasir/invoice_screen.dart';
@@ -59,8 +60,10 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     if (mounted) {
       if (result['success'] == true) {
         setState(() {
-          _bookedDates = result['booked_dates'];
-          _availableAddOns = result['addons'];
+          // 👇 UBAH DISINI: Langsung ambil nilainya dari result, tanpa menyisipkan ['data']
+          // Gunakan List<DateTime>.from() untuk memastikan tipe datanya solid
+          _bookedDates = List<DateTime>.from(result['booked_dates'] ?? []);
+          _availableAddOns = result['addons'] ?? [];
           _isLoadingSetup = false;
         });
       } else {

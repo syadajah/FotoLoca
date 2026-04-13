@@ -56,6 +56,19 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
     }
   }
 
+  String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+
+    // Pecah per spasi biar "fashion pria" jadi "Fashion Pria"
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+
   // --- FUNGSI MUNCULIN POP-UP TAMBAH/EDIT ---
   void _showFormKategoriDialog({String? initialName, int? idKategori}) {
     final TextEditingController textController = TextEditingController(
@@ -151,11 +164,12 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
                             onPressed: isSubmitting
                                 ? null
                                 : () async {
-                                    final namaKategori = textController.text
+                                    // 1. Ambil teks asli dari inputan (misal: "Fashion")
+                                    final namaKategoriAsli = textController.text
                                         .trim();
 
                                     // Validasi kosong
-                                    if (namaKategori.isEmpty) {
+                                    if (namaKategoriAsli.isEmpty) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
@@ -163,6 +177,44 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
                                           content: Text(
                                             'Nama kategori tidak boleh kosong!',
                                           ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // 2. VALIDASI DUPLIKAT (CASE-INSENSITIVE)
+                                    // Kita cek apakah ada kategori dengan nama serupa (abaikan besar/kecil huruf)
+                                    bool isDuplicate = _kategoriList.any((
+                                      kategori,
+                                    ) {
+                                      String namaListKecil = kategori['nama']
+                                          .toString()
+                                          .toLowerCase();
+                                      String namaInputKecil = namaKategoriAsli
+                                          .toLowerCase();
+
+                                      bool isNameSame =
+                                          namaListKecil == namaInputKecil;
+
+                                      // Jika mode Edit, jangan cek ID sendiri
+                                      bool isNotSelf =
+                                          !isEdit ||
+                                          kategori['id'] != idKategori;
+
+                                      return isNameSame && isNotSelf;
+                                    });
+
+                                    // 3. JIKA DUPLIKAT, TOLAK & JANGAN KIRIM KE API
+                                    if (isDuplicate) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Kategori ini sudah ada! (Beda huruf besar/kecil tidak diizinkan)',
+                                          ),
+                                          backgroundColor: Colors.orange,
                                         ),
                                       );
                                       return;
@@ -173,16 +225,18 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
 
                                     Map<String, dynamic> result;
 
-                                    // Cek ini mode EDIT atau TAMBAH
+                                    // 4. KIRIM TEKS ASLI ("Fashion") KE API
                                     if (isEdit && idKategori != null) {
                                       result = await _categoryServices
                                           .updateCategory(
                                             idKategori,
-                                            namaKategori,
+                                            namaKategoriAsli, // Teks asli yang dikirim
                                           );
                                     } else {
                                       result = await _categoryServices
-                                          .addCategory(namaKategori);
+                                          .addCategory(
+                                            namaKategoriAsli,
+                                          ); // Teks asli yang dikirim
                                     }
 
                                     // Matikan animasi muter
@@ -201,7 +255,7 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
                                         ),
                                       );
 
-                                      // REFRESH DATA BOTTOM SHEET BIAR LANGSUNG MUNCUL!
+                                      // REFRESH DATA BOTTOM SHEET
                                       _fetchKategori();
                                     } else {
                                       ScaffoldMessenger.of(
@@ -456,7 +510,7 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
                             const SizedBox(width: 15),
                             Expanded(
                               child: Text(
-                                kategori['nama'],
+                                _toTitleCase(kategori['nama'].toString()),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   color: Colors.black87,

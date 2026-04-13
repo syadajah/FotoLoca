@@ -85,158 +85,163 @@ class _AddonBottomSheetState extends State<AddonBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.5,
+    return Padding(
+      // 👇 PADDING TERLUAR INI YANG JADI KUNCI BUAT NGEDORONG UI NAIK
       padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom:
-            MediaQuery.of(context).viewInsets.bottom +
-            20, // Biar gak ketutup keyboard
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Garis tengah estetik
-          Center(
-            child: Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
+      child: Container(
+        // 👇 Hapus fixed height, biarkan mainAxisSize: min yang bekerja
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: 20,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Tinggi akan menyesuaikan konten
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Garis tengah estetik
+            Center(
+              child: Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "Kelola Add-ons",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 15),
+            const SizedBox(height: 20),
+            const Text(
+              "Kelola Add-ons",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
 
-          // Form Tambah Add-on
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: _namaController,
-                  decoration: InputDecoration(
-                    hintText: "Nama Add-on",
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 10,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: _hargaController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    CurrencyFormat(),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: "Harga",
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 10,
+            // Form Tambah Add-on
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _namaController,
+                    decoration: InputDecoration(
+                      hintText: "Nama Add-on",
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              CircleAvatar(
-                backgroundColor: AppColors.button,
-                radius: 22,
-                child: IconButton(
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 15,
-                          height: 15,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.add, color: Colors.white),
-                  onPressed: _isSubmitting ? null : _simpanAddOn,
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _hargaController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      CurrencyFormat(),
+                    ],
+                    decoration: InputDecoration(
+                      hintText: "Harga",
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Divider(),
+                const SizedBox(width: 10),
+                CircleAvatar(
+                  backgroundColor: AppColors.button,
+                  radius: 22,
+                  child: IconButton(
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            width: 15,
+                            height: 15,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.add, color: Colors.white),
+                    onPressed: _isSubmitting ? null : _simpanAddOn,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
 
-          // List Add-ons
-          _isLoading
-              ? ListView.builder(
-                  itemBuilder: (context, index) => const SkeletonAddon(),
-                  itemCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                )
-              : _addonList.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Text("Belum ada Add-on"),
-                  ),
-                )
-              : ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.7,
-                  ),
-                  child: ListView.builder(
+            // List Add-ons
+            _isLoading
+                ? ListView.builder(
+                    itemBuilder: (context, index) => const SkeletonAddon(),
+                    itemCount: 4,
                     shrinkWrap: true,
-                    itemCount: _addonList.length,
-                    itemBuilder: (context, index) {
-                      final item = _addonList[index];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          item['nama_addon'],
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          'Rp ${item['harga_addon']}',
-                          style: const TextStyle(color: Color(0xFFD4AF37)),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.red,
+                    physics: const NeverScrollableScrollPhysics(),
+                  )
+                : _addonList.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text("Belum ada Add-on"),
+                    ),
+                  )
+                : ConstrainedBox(
+                    constraints: BoxConstraints(
+                      // 👇 Batasi tinggi list-nya biar tetep bisa scroll kalau addonnya banyak
+                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _addonList.length,
+                      itemBuilder: (context, index) {
+                        final item = _addonList[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            item['nama_addon'],
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          onPressed: () => _hapusAddOn(item['id']),
-                        ),
-                      );
-                    },
+                          subtitle: Text(
+                            'Rp ${item['harga_addon']}',
+                            style: const TextStyle(color: Color(0xFFD4AF37)),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () => _hapusAddOn(item['id']),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -279,7 +284,7 @@ class SkeletonAddon extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 5,),
+            const SizedBox(width: 5),
             Container(
               width: 24,
               height: 24,

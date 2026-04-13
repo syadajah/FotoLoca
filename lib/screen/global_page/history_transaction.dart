@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fotoloca/services/transaction_services.dart';
 import 'package:fotoloca/widget/history_skeleton_list.dart';
+// --- TAMBAHAN 1: Import Secure Storage ---
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fotoloca/screen/kasir/invoice_screen.dart';
 
 class HistoryTransaction extends StatefulWidget {
   const HistoryTransaction({super.key});
@@ -20,9 +23,13 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  // --- TAMBAHAN 2: Variabel penyimpan role ---
+  String _userRole = 'kasir'; // Default kita set kasir untuk keamanan
+
   @override
   void initState() {
     super.initState();
+    _loadUserRole(); // Panggil fungsi cek role
     _fetchHistory();
   }
 
@@ -31,6 +38,20 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  // --- TAMBAHAN 3: Fungsi narik role dari storage ---
+  Future<void> _loadUserRole() async {
+    const storage = FlutterSecureStorage();
+    final role = await storage.read(
+      key: 'user_role',
+    ); // Pastikan key-nya sama dengan waktu login
+
+    if (mounted) {
+      setState(() {
+        _userRole = role ?? 'kasir';
+      });
+    }
   }
 
   // --- FUNGSI TARIK DATA DARI API ---
@@ -285,16 +306,18 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
         automaticallyImplyLeading: false,
       ),
 
-      // TOMBOL CETAK UTAMA (MEMANGGIL POP-UP)
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-          side: BorderSide(color: Colors.grey.shade300),
-        ),
-        onPressed: _showExportOptions,
-        child: const Icon(Icons.print_rounded, color: Colors.black87),
-      ),
+      // --- TAMBAHAN 4: Logika penyembunyian FAB ---
+      floatingActionButton: (_userRole == 'admin' || _userRole == 'owner')
+          ? FloatingActionButton(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+                side: BorderSide(color: Colors.grey.shade300),
+              ),
+              onPressed: _showExportOptions,
+              child: const Icon(Icons.print_rounded, color: Colors.black87),
+            )
+          : null, // Return null kalau kasir, jadi tombolnya ga digambar
 
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -483,111 +506,140 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
                         String namaProduk =
                             product['nama_produk'] ?? 'Produk (Terhapus)';
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 0.5,
+                        return GestureDetector(
+                          onTap: () {
+                            // Cek apakah role-nya kasir
+                            if (_userRole == 'kasir') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => InvoiceScreenKasir(
+                                    transactionData: tx,
+                                    productData: product,
+                                    categoryName: namaKategori,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // Munculkan notifikasi jika bukan kasir
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Detail invoice hanya dapat diakses oleh Kasir.',
+                                  ),
+                                  backgroundColor: Colors
+                                      .orange, // Warna orange biar terkesan peringatan, bukan error fatal
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 0.5,
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: product['foto'] != null
-                                    ? Image.network(
-                                        product['foto'],
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) => Container(
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: product['foto'] != null
+                                      ? Image.network(
+                                          product['foto'],
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, _, _) => Container(
+                                            width: 80,
+                                            height: 80,
+                                            color: Colors.grey.shade200,
+                                          ),
+                                        )
+                                      : Container(
                                           width: 80,
                                           height: 80,
                                           color: Colors.grey.shade200,
                                         ),
-                                      )
-                                    : Container(
-                                        width: 80,
-                                        height: 80,
-                                        color: Colors.grey.shade200,
-                                      ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          namaKategori,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        Text(
-                                          namaKasir,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      "$nomorUnik • $namaPelanggan",
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      namaProduk,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          formatDate(tx['jadwal'] ?? '-'),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        Text(
-                                          formatRupiah(totalHarga),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFFD4AF37),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            namaKategori,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            namaKasir,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        "$nomorUnik • $namaPelanggan",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        namaProduk,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            formatDate(tx['jadwal'] ?? '-'),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          Text(
+                                            formatRupiah(totalHarga),
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFFD4AF37),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

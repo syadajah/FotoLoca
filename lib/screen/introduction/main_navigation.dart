@@ -5,6 +5,8 @@ import 'package:fotoloca/screen/kasir/homepage_kasir.dart';
 import 'package:fotoloca/screen/admin/products/product_screen_admin.dart';
 import 'package:fotoloca/screen/admin/users/users_screen_admin.dart';
 import 'package:fotoloca/screen/global_page/profile_screen.dart';
+import 'package:fotoloca/screen/owner/homepage_owner.dart';
+import 'package:fotoloca/screen/owner/product_screen_owner.dart';
 import 'package:fotoloca/utils/app_colors.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
@@ -63,13 +65,17 @@ class _MainNavigationState extends State<MainNavigation> {
 
       case 'owner':
         _pages = [
-          const Center(child: Text("Dashboard admin")),
-          const Center(child: Text("Tambah produk")),
-          const Center(child: Text("Profil admin")),
+          const Center(child: HomepageOwner()),
+          const Center(child: ProductScreenOwner()),
+          const Center(child: HistoryTransaction()),
+          const Center(child: UsersScreenAdmin()),
+          const Center(child: ProfileScreen()),
         ];
         _navItems = const [
-          GButton(icon: Icons.dashboard, text: 'Dashboard'),
-          GButton(icon: Icons.add, text: 'Tambah'),
+          GButton(icon: Icons.home, text: 'Beranda'),
+          GButton(icon: Icons.camera, text: 'Produk'),
+          GButton(icon: Icons.history, text: 'Transaksi'),
+          GButton(icon: Icons.group, text: 'Pengguna'),
           GButton(icon: Icons.person, text: 'Profil'),
         ];
         break;

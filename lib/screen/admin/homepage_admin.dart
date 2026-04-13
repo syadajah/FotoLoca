@@ -43,7 +43,9 @@ class _HomepageAdminState extends State<HomepageAdmin> {
         for (var dateString in result['data']['booked_dates']) {
           try {
             // Sesuaikan format dengan format yang dikirim Laravel (misal: yyyy-MM-dd)
-            parsedDates.add(DateFormat('yyyy-MM-dd').parse(dateString));
+            parsedDates.add(
+              DateFormat('dd MMM yyyy').parse(dateString.toString()),
+            );
           } catch (e) {
             print("Gagal parsing tanggal: $dateString");
           }
@@ -322,7 +324,9 @@ class _HomepageAdminState extends State<HomepageAdmin> {
                                   margin: const EdgeInsets.all(4.0),
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: Colors.redAccent.withOpacity(0.2),
+                                    color: Colors.redAccent.withValues(
+                                      alpha: 0.2,
+                                    ),
                                     borderRadius: BorderRadius.circular(8.0),
                                     border: Border.all(color: Colors.redAccent),
                                   ),

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fotoloca/core/network/api_client.dart';
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 
@@ -136,32 +137,31 @@ class TransactionServices {
   // --- JURUS 1 KALI JALAN: NANGKEP TANGGAL LAKU & ADDON ---
   Future<Map<String, dynamic>> getTransactionSetup(int idProduk) async {
     try {
-      // Ngetok pintu Laravel cuma 1 kali!
       final response = await _apiClient.dio.get('/transaction-setup/$idProduk');
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final responseData = response.data['data'];
 
-        // 1. Olah Data Tanggal (Ubah String YYYY-MM-DD jadi DateTime Flutter)
         List<dynamic> rawDates = responseData['booked_dates'] ?? [];
         List<DateTime> parsedDates = [];
         for (var dateStr in rawDates) {
           try {
-            parsedDates.add(DateTime.parse(dateStr.toString()));
+            // 👇 UBAH BARIS INI: Gunakan DateFormat agar cocok dengan "14 Apr 2026"
+            parsedDates.add(
+              DateFormat('dd MMM yyyy').parse(dateStr.toString()),
+            );
           } catch (e) {
-            print("⚠️ Gagal parsing tanggal: $dateStr");
+            print("⚠️ Gagal parsing tanggal di Service: $dateStr | Error: $e");
           }
         }
 
-        // 2. Olah Data Add-ons
         List<dynamic> addonsList = responseData['addons'] ?? [];
-
         print("✅ Fetch data add ons & jadwal sukses!");
 
-        // 3. Kembalikan 2 data sekaligus dalam 1 Map
         return {
           'success': true,
-          'booked_dates': parsedDates,
+          'booked_dates':
+              parsedDates, // Ini sudah berupa List<DateTime> yang valid!
           'addons': addonsList,
         };
       }

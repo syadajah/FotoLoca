@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fotoloca/services/dashboard_services.dart';
-import 'package:fotoloca/widget/custom_adminhomepage_skeleton.dart';
+import 'package:fotoloca/widget/custom_ownerhomepage_skeleton.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart'; // Import untuk parsing tanggal
 
@@ -34,7 +34,9 @@ class _HomepageOwnerState extends State<HomepageOwner> {
     final name = await storage.read(key: 'user_name');
     if (name != null) setState(() => _adminName = name);
 
-    final result = await DashboardServices().getAdminDashboard();
+    final result = await DashboardServices().getDashboard();
+
+    print("DATA DARI API: ${result['data']}");
 
     if (result['success'] == true) {
       // Parsing data tanggal string ("YYYY-MM-DD") menjadi objek DateTime
@@ -42,7 +44,7 @@ class _HomepageOwnerState extends State<HomepageOwner> {
       if (result['data']['booked_dates'] != null) {
         for (var dateString in result['data']['booked_dates']) {
           try {
-            // Sesuaikan format dengan format yang dikirim Laravel (misal: yyyy-MM-dd)
+            // Sesuaikan format dengan format yang dikirim Laravel (misal: dd MMM yyyy)
             parsedDates.add(
               DateFormat('dd MMM yyyy').parse(dateString.toString()),
             );
@@ -90,7 +92,7 @@ class _HomepageOwnerState extends State<HomepageOwner> {
       ), // Warna background persis desain
       body: SafeArea(
         child: _isLoading
-            ? const AdminSkeleton()
+            ? const OwnerSkeleton()
             : SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
@@ -112,12 +114,12 @@ class _HomepageOwnerState extends State<HomepageOwner> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Tetap produktif dalam mengelola aplikasi ✨',
+                        'Siap memantau data perusahaan anda ✨',
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 30),
 
-                      // --- CARD 1: INFORMASI PENGGUNA ---
+                      // --- CARD 1: INFORMASI PENGGUNA BERJALAN ---
                       const Text(
                         "Informasi Pengguna Berjalan",
                         style: TextStyle(
@@ -127,67 +129,154 @@ class _HomepageOwnerState extends State<HomepageOwner> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8D8D8D),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Stack(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
+                      Row(
+                        children: [
+                          // ===== KOTAK ADMIN =====
+                          Expanded(
+                            child: Container(
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF4A4A4A,
+                                ), // Warna abu-abu gelap
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Stack(
                                 children: [
-                                  Row(
-                                    children: const [
-                                      Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                        size: 16,
+                                  Positioned(
+                                    right: -10,
+                                    bottom: -10,
+                                    top: 10,
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.only(
+                                        bottomRight: Radius.circular(15),
+                                        topRight: Radius.circular(15),
                                       ),
-                                      SizedBox(width: 5),
-                                      Text(
-                                        "Kasir",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
+                                      child: Opacity(
+                                        opacity:
+                                            0.4, // Transparan agar teks terbaca
+                                        child: Image.asset(
+                                          'assets/images/amico2.png',
+                                          fit: BoxFit.fitHeight,
                                         ),
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "Aktif: ${_dashboardData['kasir']?['aktif'] ?? 0}/${_dashboardData['kasir']?['total'] ?? 0}",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                                  Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Row(
+                                          children: const [
+                                            Icon(
+                                              Icons.admin_panel_settings,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 5),
+                                            Text(
+                                              "Admin",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          "Aktif: ${_dashboardData['admin']?['aktif'] ?? 0}/${_dashboardData['admin']?['total'] ?? 0}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              top: 0,
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.only(
-                                  bottomRight: Radius.circular(15),
-                                  topRight: Radius.circular(15),
-                                ),
-                                child: Image.asset(
-                                  'assets/images/amico.png',
-                                  fit: BoxFit.fitHeight,
-                                ),
+                          ),
+
+                          const SizedBox(width: 15), // Jarak antar kotak
+                          // ===== KOTAK KASIR =====
+                          Expanded(
+                            child: Container(
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF4A4A4A,
+                                ), // Warna abu-abu terang
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    top: 0,
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.only(
+                                        bottomRight: Radius.circular(15),
+                                        topRight: Radius.circular(15),
+                                      ),
+                                      child: Opacity(
+                                        opacity: 0.4,
+                                        child: Image.asset(
+                                          'assets/images/amico.png',
+                                          fit: BoxFit.fitHeight,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Row(
+                                          children: const [
+                                            Icon(
+                                              Icons.person,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 5),
+                                            Text(
+                                              "Kasir",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          "Aktif: ${_dashboardData['kasir']?['aktif'] ?? 0}/${_dashboardData['kasir']?['total'] ?? 0}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 30),
 

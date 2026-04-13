@@ -4,11 +4,10 @@ import 'package:fotoloca/core/network/api_client.dart'; // Sesuaikan path api_cl
 class DashboardServices {
   final ApiClient _apiClient = ApiClient();
 
-  // --- FUNGSI TARIK DATA DASHBOARD ADMIN ---
-  Future<Map<String, dynamic>> getAdminDashboard() async {
+  Future<Map<String, dynamic>> getDashboard() async {
     try {
       // Nembak ke route yang udah kita arahin ke DashboardController di Laravel
-      final response = await _apiClient.dio.get('/dashboard/admin');
+      final response = await _apiClient.dio.get('/dashboard');
 
       if (response.statusCode == 200) {
         return {'success': true, 'data': response.data['data']};
@@ -24,7 +23,4 @@ class DashboardServices {
       return {'success': false, 'message': 'Error: $e'};
     }
   }
-
-  // --- NANTI BUAT OWNER TINGGAL TAMBAHIN DI BAWAH SINI ---
-  // Future<Map<String, dynamic>> getOwnerDashboard() async { ... }
 }

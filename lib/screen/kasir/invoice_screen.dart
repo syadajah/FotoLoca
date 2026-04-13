@@ -95,6 +95,59 @@ class _InvoiceScreenKasirState extends State<InvoiceScreenKasir> {
     }
   }
 
+  // --- DIALOG LOADING SAAT PRINT ---
+  void _showPrintingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User tidak bisa klik luar untuk close
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.symmetric(horizontal: 40),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5A5A5A)),
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                "Sedang menyiapkan struk...",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 4),
+              Text(
+                "Mohon tunggu sebentar",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ekstrak Data dari widget (harus pakai widget. karena sekarang Stateful)
@@ -161,8 +214,68 @@ class _InvoiceScreenKasirState extends State<InvoiceScreenKasir> {
             Expanded(
               flex: 1,
               child: OutlinedButton(
-                onPressed: () {
-                  print("Proses cetak struk via bluetooth thermal...");
+                onPressed: () async {
+                  // 1. Validasi ID Transaksi
+                  final txId = int.tryParse(
+                    widget.transactionData['id'].toString(),
+                  );
+
+                  if (txId == null || txId == 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('ID Transaksi tidak valid.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  // 2. Tampilkan loading dialog
+                  _showPrintingDialog(context);
+
+                  try {
+                    // 3. Panggil service print
+                    final result = await TransactionServices().printTransaction(
+                      txId,
+                    );
+
+                    // 4. Tutup dialog jika widget masih mounted
+                    if (mounted) {
+                      Navigator.of(context).pop(); // Close dialog loading
+
+                      // 5. Tampilkan result ke user
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result['message']),
+                          backgroundColor: result['success']
+                              ? Colors.green
+                              : Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+
+                      // Opsional: Jika sukses, bisa auto-back setelah 2 detik
+                      if (result['success']) {
+                        await Future.delayed(const Duration(seconds: 2));
+                        if (mounted)
+                          Navigator.of(
+                            context,
+                          ).pop(); // Kembali ke screen sebelumnya
+                      }
+                    }
+                  } catch (e) {
+                    // Handle error tak terduga
+                    if (mounted) {
+                      Navigator.of(context).pop(); // Pastikan dialog ditutup
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Terjadi kesalahan: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

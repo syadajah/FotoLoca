@@ -45,13 +45,26 @@ class _DetailProductKasirState extends State<DetailProductKasir> {
     return 'Rp $result';
   }
 
+  String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final String imageUrl = widget.productData['foto'] ?? '';
-    final String namaProduk =
-        widget.productData['nama_produk'] ?? 'Nama Produk';
-    final String deskripsi =
-        widget.productData['deskripsi'] ?? 'Deskripsi tidak tersedia.';
+    final String namaProduk = _toTitleCase(
+      widget.productData['nama_produk'] ?? 'Nama Produk',
+    );
+    final String deskripsi = _toTitleCase(
+      widget.productData['deskripsi'] ?? 'Deskripsi tidak tersedia.',
+    );
     final String tier = widget.productData['tier_level'] ?? 'Essential';
     final int harga =
         int.tryParse(widget.productData['harga_produk'].toString()) ?? 0;

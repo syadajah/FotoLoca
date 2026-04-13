@@ -34,7 +34,7 @@ class _HomepageAdminState extends State<HomepageAdmin> {
     final name = await storage.read(key: 'user_name');
     if (name != null) setState(() => _adminName = name);
 
-    final result = await DashboardServices().getAdminDashboard();
+    final result = await DashboardServices().getDashboard();
 
     if (result['success'] == true) {
       // Parsing data tanggal string ("YYYY-MM-DD") menjadi objek DateTime

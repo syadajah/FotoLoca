@@ -9,22 +9,33 @@ class ProductCard extends StatelessWidget {
   final String? tier;
   final VoidCallback? onTap;
 
-  // Fungsi penentu jumlah bintang berdasarkan tier
-  int _getStarCount(String? tierLevel) {
-    if (tierLevel == 'Exclusive') return 3;
-    if (tierLevel == 'Signature') return 2;
-    return 1; // Default Essential dapet 1 bintang
-  }
-
   const ProductCard({
     super.key,
     required this.imageUrl,
     required this.categoryName,
     required this.productName,
     required this.price,
-    this.tier, // <--- 2. MASUKIN KE CONSTRUCTOR
+    this.tier,
     this.onTap,
   });
+
+  int _getStarCount(String? tierLevel) {
+    if (tierLevel == 'Exclusive') return 3;
+    if (tierLevel == 'Signature') return 2;
+    return 1;
+  }
+
+  // --- TAMBAHAN: Helper fungsi buat ngubah "fashion pria" jadi "Fashion Pria" ---
+  String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +57,6 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- BAGIAN GAMBAR YG DIBUNGKUS STACK ---
             Stack(
               children: [
                 ClipRRect(
@@ -55,7 +65,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   child: Image.network(
                     imageUrl,
-                    height: 160, // Gw gedein dikit biar bintangnya lega
+                    height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, StackTrace) {
@@ -72,8 +82,6 @@ class ProductCard extends StatelessWidget {
                     },
                   ),
                 ),
-
-                // BADGE BINTANG
                 Positioned(
                   top: 12,
                   right: 12,
@@ -100,9 +108,7 @@ class ProductCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: List.generate(
-                        _getStarCount(
-                          tier,
-                        ), // <--- 3. PANGGIL VARIABEL TIER DI SINI
+                        _getStarCount(tier),
                         (index) => const Padding(
                           padding: EdgeInsets.only(right: 2.0),
                           child: Icon(
@@ -117,15 +123,13 @@ class ProductCard extends StatelessWidget {
                 ),
               ],
             ),
-
-            // --- BAGIAN TEKS ---
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    categoryName,
+                    _toTitleCase(categoryName), // <--- Bikin cantik kategori
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.grey,
@@ -134,7 +138,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    productName,
+                    _toTitleCase(productName), // <--- Bikin cantik produk
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,

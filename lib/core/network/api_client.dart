@@ -8,7 +8,7 @@ class ApiClient {
     // 1. Konfigurasi Dasar Dio
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'http://10.71.0.123:8000/api',
+        baseUrl: 'http://10.10.30.23:8000/api',
         connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(seconds: 30),
         headers: {

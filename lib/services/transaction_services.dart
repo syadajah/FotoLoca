@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
 
 class TransactionServices {
   final ApiClient _apiClient = ApiClient();
@@ -246,6 +248,100 @@ class TransactionServices {
       return {'success': false, 'message': 'Koneksi ke server bermasalah.'};
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> printTransaction(int transactionId) async {
+    try {
+      print("🖨️ [DEBUG] Start download PDF for txId: $transactionId");
+
+      final response = await _apiClient.dio.get(
+        '/transactions/print/$transactionId',
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'Accept': 'application/pdf'},
+        ),
+      );
+
+      print(
+        "📦 Status: ${response.statusCode}, Type: ${response.headers.value('content-type')}",
+      );
+
+      if (response.data is List<int>) {
+        print("📄 PDF bytes: ${response.data.length}");
+
+        // Validasi: PDF terlalu kecil = kemungkinan kosong/rusak
+        if (response.data.length < 5000) {
+          print(
+            "⚠️ WARNING: PDF size ${response.data.length} bytes terlalu kecil!",
+          );
+
+          // Save untuk debug
+          final directory = await getApplicationDocumentsDirectory();
+          final file = File(
+            '${directory.path}/debug-invoice-$transactionId.pdf',
+          );
+          await file.writeAsBytes(response.data);
+          print("💾 Debug PDF saved: ${file.path}");
+
+          return {
+            'success': false,
+            'message':
+                'PDF dari server terlalu kecil (${response.data.length} bytes). Cek backend.',
+          };
+        }
+      }
+
+      if (response.statusCode == 200) {
+        // Coba printing via package
+        try {
+          print("🖨️ Calling Printing.layoutPdf...");
+          await Printing.layoutPdf(
+            onLayout: (PdfPageFormat format) async {
+              print("📐 Layout format: ${format.width}x${format.height}");
+              return response.data;
+            },
+            name: 'Invoice-$transactionId',
+          );
+          print("✅ Print dialog opened successfully");
+          return {'success': true, 'message': 'Print berhasil dimulai'};
+        } catch (printError) {
+          print("⚠️ Printing failed, trying fallback: $printError");
+
+          // FALLBACK: Save & Open with external app
+          final directory = await getApplicationDocumentsDirectory();
+          final filePath = '${directory.path}/invoice-$transactionId.pdf';
+          final file = File(filePath);
+          await file.writeAsBytes(response.data);
+
+          final result = await OpenFilex.open(filePath);
+
+          if (result.type == ResultType.done) {
+            return {
+              'success': true,
+              'message':
+                  'Invoice dibuka di PDF viewer (silahkan print dari sana)',
+            };
+          } else {
+            return {
+              'success': false,
+              'message': 'Gagal membuka PDF. File tersimpan di: $filePath',
+            };
+          }
+        }
+      }
+
+      return {
+        'success': false,
+        'message': 'Server error: ${response.statusCode}',
+      };
+    } on DioException catch (e) {
+      print("❌ Dio error: ${e.type} - ${e.message}");
+      print("📦 Response: ${e.response?.data}");
+      return {'success': false, 'message': 'Gagal download PDF: ${e.message}'};
+    } catch (e, stack) {
+      print("❌ System error: $e\n$stack");
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

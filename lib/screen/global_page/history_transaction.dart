@@ -292,6 +292,17 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
     setState(() {});
   }
 
+  String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -497,14 +508,19 @@ class _HistoryTransactionState extends State<HistoryTransaction> {
                             int.tryParse(tx['uang_kembali'].toString()) ?? 0;
                         int totalHarga = uangBayar - uangKembali;
 
-                        String namaKategori =
-                            category['nama_kategori'] ?? 'Kategori';
+                        // 👇 BUNGKUS PAKAI _toTitleCase DI SINI
+                        String namaKategori = _toTitleCase(
+                          category['nama_kategori'] ?? 'Kategori',
+                        );
                         String namaKasir = user['name'] ?? 'Kasir (Terhapus)';
                         String nomorUnik = tx['nomor_unik'] ?? 'XXX-XXX';
-                        String namaPelanggan =
-                            tx['nama_pelanggan'] ?? 'Pelanggan';
-                        String namaProduk =
-                            product['nama_produk'] ?? 'Produk (Terhapus)';
+                        // Opsional: Sekalian poles nama pelanggan biar cakep
+                        String namaPelanggan = _toTitleCase(
+                          tx['nama_pelanggan'] ?? 'Pelanggan',
+                        );
+                        String namaProduk = _toTitleCase(
+                          product['nama_produk'] ?? 'Produk (Terhapus)',
+                        );
 
                         return GestureDetector(
                           onTap: () {

@@ -49,6 +49,7 @@ dependencies:
   table_calendar: ^3.2.0
   path_provider: ^2.1.5
   open_filex: ^4.7.0
+  printing: ^5.12.0
 
 flutter_native_splash:
   color: "#f4f4f4"
@@ -90,6 +91,7 @@ flutter:
     - assets/images/onboard3.png
     - assets/images/pana.png
     - assets/images/amico.png
+    - assets/images/amico2.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

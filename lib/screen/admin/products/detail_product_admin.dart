@@ -30,20 +30,34 @@ class _DetailProductAdminState extends State<DetailProductAdmin> {
   @override
   void initState() {
     super.initState();
-    _loadUserRole(); // --- Panggil pengecekan role saat halaman dibuka ---
+    _loadUserRole();
+
+    String toTitleCase(String text) {
+      if (text.isEmpty) return text;
+      return text
+          .split(' ')
+          .map((word) {
+            if (word.isEmpty) return word;
+            return word[0].toUpperCase() + word.substring(1).toLowerCase();
+          })
+          .join(' ');
+    }
 
     // 3. Langsung isi semua controller dengan data bawaan dari database
     _nameController = TextEditingController(
-      text: widget.productData['nama_produk'] ?? 'Tanpa Nama',
+      text: toTitleCase(widget.productData['nama_produk'] ?? 'Tanpa Nama'),
     );
-    // Ambil nama kategori dari relasi JSON
+
     _categoryController = TextEditingController(
-      text:
-          widget.productData['category']?['nama_kategori'] ?? 'Tanpa Kategori',
+      text: toTitleCase(
+        widget.productData['category']?['nama_kategori'] ?? 'Tanpa Kategori',
+      ),
     );
+
     _priceController = TextEditingController(
       text: widget.productData['harga_produk']?.toString() ?? '0',
     );
+
     _descriptionController = TextEditingController(
       text: widget.productData['deskripsi'] ?? 'Tidak ada deskripsi',
     );

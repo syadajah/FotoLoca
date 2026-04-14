@@ -37,6 +37,21 @@ class ProductCard extends StatelessWidget {
         .join(' ');
   }
 
+  // --- TAMBAHAN: Helper fungsi buat format harga jadi format Rupiah ---
+  String _formatRupiah(String priceText) {
+    // Hilangkan karakter selain angka dulu (jaga-jaga kalau inputnya udah ada huruf/spasi)
+    final cleanStr = priceText.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanStr.isEmpty) return priceText; // Kalau kosong/bukan angka, balikin aslinya
+
+    // Kasih titik setiap 3 angka pakai Regex
+    final formatted = cleanStr.replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+    
+    return 'Rp$formatted';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -129,7 +144,7 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _toTitleCase(categoryName), // <--- Bikin cantik kategori
+                    _toTitleCase(categoryName),
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.grey,
@@ -138,7 +153,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _toTitleCase(productName), // <--- Bikin cantik produk
+                    _toTitleCase(productName),
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
@@ -149,7 +164,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    price,
+                    _formatRupiah(price), // <--- Fungsi Rupiah dipanggil di sini
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -171,10 +186,9 @@ class ProductCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Shimmer bikin efek cahaya jalan
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!, // Abu-abu gelap (dasar)
-      highlightColor: Colors.grey[100]!, // Abu-abu terang (cahaya)
+      baseColor: Colors.grey[300]!, 
+      highlightColor: Colors.grey[100]!, 
       child: Container(
         margin: const EdgeInsets.only(bottom: 16.0),
         decoration: BoxDecoration(
@@ -184,26 +198,21 @@ class ProductCardSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fake Foto Top (Pastiin tingginya sama 160 biar gak lompat pas datanya dapet)
             Container(
               height: 125,
               width: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white, // Shimmer butuh warna buat diefek
+                color: Colors.white, 
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
               ),
             ),
-
-            // Fake Teks Teks di bawah foto
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Fake Kategori
                   Container(width: 80, height: 13, color: Colors.white),
                   const SizedBox(height: 10),
-                  // Fake Nama Produk (Dua baris)
                   Container(
                     width: double.infinity,
                     height: 16,
@@ -212,7 +221,6 @@ class ProductCardSkeleton extends StatelessWidget {
                   const SizedBox(height: 6),
                   Container(width: 200, height: 16, color: Colors.white),
                   const SizedBox(height: 8),
-                  // Fake Harga
                   Container(width: 100, height: 15, color: Colors.white),
                 ],
               ),

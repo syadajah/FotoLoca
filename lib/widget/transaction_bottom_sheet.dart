@@ -147,7 +147,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       count++;
       if (count % 3 == 0 && i != 0) result = '.$result';
     }
-    return 'Rp $result';
+    return 'Rp$result';
   }
 
   void _onUangBayarChanged(String value) {
@@ -739,26 +739,29 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Bayar",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Bayar",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      formatRupiah(_grandTotal),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      Text(
+                        formatRupiah(_grandTotal),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

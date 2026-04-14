@@ -42,7 +42,7 @@ class _DetailProductKasirState extends State<DetailProductKasir> {
         result = '.$result';
       }
     }
-    return 'Rp $result';
+    return 'Rp$result';
   }
 
   String _toTitleCase(String text) {
